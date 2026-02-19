@@ -1004,8 +1004,37 @@ function suggestDoses(){
 
   const cur = () => sumMacros(doses.map(d=>macrosForGrams(d.per100, d.grams)));
 
-  let constrainedApprox = false;
-  const maxIters = 24;
+  // Phase 1: reduce excess protein first (10% tolerance)
+  const proteinToleranceCap = target.protein * 1.10;
+  const unlockedProteinItems = doses
+    .filter((d)=>!d.locked && classifyIngredient(d)==='protein')
+    .sort((a,b)=>b.grams-a.grams);
+  const protectedMainProtein = unlockedProteinItems.find((d)=>d.grams > 80);
+
+  const proteinFloorFor = (d)=>{
+    if(d.locked) return d.grams;
+    if(protectedMainProtein && protectedMainProtein.name===d.name) return 80;
+    return 0;
+  };
+
+  let proteinGuard = 0;
+  while(cur().protein > proteinToleranceCap + 0.05 && proteinGuard < 500){
+    const candidate = doses
+      .filter((d)=>!d.locked && classifyIngredient(d)==='protein' && d.grams - proteinFloorFor(d) >= 10)
+      .map((d)=>{
+        const proteinPerKcal = (d.per100.protein||0) / Math.max(d.per100.kcal||0, 1);
+        const proteinPerGram = (d.per100.protein||0) / 100;
+        return { d, score: proteinPerKcal * 1000 + proteinPerGram };
+      })
+      .sort((a,b)=>b.score-a.score)[0];
+
+    if(!candidate) break;
+    candidate.d.grams = Math.max(proteinFloorFor(candidate.d), candidate.d.grams - 10);
+    proteinGuard++;
+  }
+
+  // Phase 2: fill deficits / trim remaining excesses
+  const maxIters = 36;
   for(let i=0;i<maxIters;i++){
     const totals = cur();
     const deficits = {
@@ -1015,8 +1044,14 @@ function suggestDoses(){
       fat: target.fat - totals.fat
     };
 
-    const focus = ['kcal','protein','carbs','fat']
-      .sort((a,b)=>Math.abs(deficits[b])*W[b]-Math.abs(deficits[a])*W[a])[0];
+    const focusOrder = ['kcal','protein','carbs','fat']
+      .sort((a,b)=>Math.abs(deficits[b])*W[b]-Math.abs(deficits[a])*W[a]);
+    let focus = focusOrder[0];
+    if(deficits.carbs > 0){
+      focus = 'carbs';
+    }else if(deficits.fat > 0 && (deficits.protein > 0 || deficits.carbs > 0)){
+      focus = focusOrder.find((k)=>k!=='fat') || 'fat';
+    }
 
     const tryPick = (allowOils)=>{
       const baseObjective = objective(totals);
@@ -1028,10 +1063,14 @@ function suggestDoses(){
         const isOil = isProtectedOilName(d.name);
         if(isOil && !allowOils) continue;
 
-        const step = isOil ? 5 : 10;
         const direction = deficits[focus] >= 0 ? 1 : -1;
         const roomUp = d.maxG - d.grams;
         const roomDown = d.grams - d.minG;
+        let step = isOil ? 5 : 10;
+        if(focus==='carbs' && direction > 0 && cat==='carb'){
+          const largeStep = Math.floor(Math.min(150, roomUp) / 10) * 10;
+          if(largeStep >= 10) step = largeStep;
+        }
         if((direction > 0 && roomUp < step) || (direction < 0 && roomDown < step)) continue;
 
         if(cat==='vegetable' && Math.abs((d.grams + direction*step) - d.startGrams) > 40) continue;
@@ -1047,9 +1086,10 @@ function suggestDoses(){
         const density = (d.per100[focus]||0)/100;
         const improvement = baseObjective - objective(nextTotals);
         let priority = 0;
-        if(focus==='carbs' && cat==='carb') priority = 0.2;
+        if(focus==='carbs' && cat==='carb') priority = 0.45;
         if(focus==='protein' && cat==='protein') priority = 0.2;
         if(focus==='kcal' && (cat==='carb' || cat==='protein')) priority = 0.1;
+        if(focus==='fat' && deficits.fat > 0 && cat==='fat') priority = 0.15;
         if(isOil) priority -= 0.5;
 
         candidates.push({ d, ng, score: improvement + density*0.01 + priority });
@@ -1064,7 +1104,6 @@ function suggestDoses(){
       pick = tryPick(true);
     }
     if(!pick || pick.score <= 0){
-      constrainedApprox = true;
       break;
     }
     pick.d.grams = pick.ng;
@@ -1094,11 +1133,36 @@ function suggestDoses(){
   }
 
   totals = cur();
-  const kcalDevPct = Math.abs(totals.kcal-target.kcal)/Math.max(target.kcal,1)*100;
   const pDevPct = Math.abs(totals.protein-target.protein)/Math.max(target.protein,1)*100;
   const cDevPct = Math.abs(totals.carbs-target.carbs)/Math.max(target.carbs,1)*100;
   const fDevPct = Math.abs(totals.fat-target.fat)/Math.max(target.fat,1)*100;
-  if(kcalDevPct>7 || pDevPct>18 || cDevPct>18 || fDevPct>25) constrainedApprox = true;
+
+  const canAdjustMacro = (macro, direction)=>{
+    const step = macro==='fat' ? 5 : 10;
+    return doses.some((d)=>{
+      if(d.locked) return false;
+      if((d.per100[macro]||0) <= 0) return false;
+      const room = direction > 0 ? (d.maxG - d.grams) : (d.grams - d.minG);
+      return room >= step;
+    });
+  };
+
+  const macroDevs = {
+    protein: pDevPct,
+    carbs: cDevPct,
+    fat: fDevPct
+  };
+  const macroTol = {
+    protein: 18,
+    carbs: 18,
+    fat: 25
+  };
+  const outsideMacros = Object.keys(macroDevs).filter((k)=>macroDevs[k] > macroTol[k]);
+  const noUnlockedFixes = outsideMacros.length > 0 && outsideMacros.every((macro)=>{
+    const direction = (target[macro] - totals[macro]) >= 0 ? 1 : -1;
+    return !canAdjustMacro(macro, direction);
+  });
+  const constrainedApprox = outsideMacros.length > 0 && noUnlockedFixes;
 
   doses.forEach((d, idx)=>{
     const rowState = doseStateFor(idx, d);

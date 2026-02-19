@@ -69,11 +69,52 @@ async function postJson(pathname, body) {
 }
 
 async function fetchList() {
-  const response = await fetch(`${BASE_URL}${LIST_PATH}`);
-  if (!response.ok) throw new Error(`Elenco alimenti non disponibile: HTTP ${response.status}`);
-  const html = await response.text();
-  const rows = [...html.matchAll(/<tr[^>]*>\s*<td[^>]*>(\d+)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>.*?<\/td>\s*<td/gis)];
-  return rows.map((m) => ({ code: m[1], name: cleanText(m[2]) }));
+  const seenCodes = new Set();
+  const foods = [];
+  const pageStats = [];
+  const maxPages = 200;
+
+  for (let page = 1; page <= maxPages; page += 1) {
+    const listUrl = page === 1 ? `${BASE_URL}${LIST_PATH}` : `${BASE_URL}${LIST_PATH}&paged=${page}`;
+    const response = await fetch(listUrl);
+    if (!response.ok) throw new Error(`Elenco alimenti non disponibile alla pagina ${page}: HTTP ${response.status}`);
+
+    const html = await response.text();
+    const rows = [...html.matchAll(/<tr[^>]*>\s*<td[^>]*>(\d+)<\/td>\s*<td[^>]*>(.*?)<\/td>\s*<td[^>]*>.*?<\/td>\s*<td/gis)];
+    const pageFoods = rows.map((m) => ({ code: m[1], name: cleanText(m[2]) }));
+    let addedThisPage = 0;
+
+    for (const food of pageFoods) {
+      if (seenCodes.has(food.code)) continue;
+      seenCodes.add(food.code);
+      foods.push(food);
+      addedThisPage += 1;
+    }
+
+    pageStats.push({ page, parsedRows: pageFoods.length, addedRows: addedThisPage });
+
+    // Stop when pagination is exhausted (no rows), or there are rows but nothing new.
+    if (pageFoods.length === 0 || addedThisPage === 0) break;
+  }
+
+  if (foods.length === 0) {
+    throw new Error('Elenco alimenti vuoto: nessuna riga valida trovata nella/e pagina/e lista BDA.');
+  }
+
+  const pagesRead = pageStats.length;
+  const parsedTotal = pageStats.reduce((acc, page) => acc + page.parsedRows, 0);
+  console.log(`[build_bda_db] list pages read: ${pagesRead}`);
+  console.log(`[build_bda_db] list rows parsed (with duplicates): ${parsedTotal}`);
+  console.log(`[build_bda_db] list unique foods collected: ${foods.length}`);
+
+  return foods;
+}
+
+function hasKeyword(entry, keyword) {
+  const normalizedKeyword = normalizeName(keyword);
+  if (!normalizedKeyword) return false;
+  const allNames = [entry.name, ...(entry.aliases || [])];
+  return allNames.some((value) => normalizeName(value).includes(normalizedKeyword));
 }
 
 function dedupeEntries(entries) {
@@ -154,7 +195,8 @@ async function main() {
 
   const complete = finalDb.filter((f) => Object.values(f.per100).every((v) => v !== null)).length;
   const incomplete = finalDb.length - complete;
-  const hasPasta = finalDb.some((f) => normalizeName(f.name).includes('pasta'));
+  const hasPasta = finalDb.some((f) => hasKeyword(f, 'pasta'));
+  const hasSpaghetti = finalDb.some((f) => hasKeyword(f, 'spaghetti'));
   const hasUovoIntero = finalDb.some((f) => {
     const n = normalizeName(f.name);
     return n.includes('uovo') && !n.includes('albume');
@@ -164,8 +206,12 @@ async function main() {
   console.log(`[build_bda_db] complete macros: ${complete}`);
   console.log(`[build_bda_db] incomplete macros: ${incomplete}`);
   console.log(`[build_bda_db] pasta present: ${hasPasta}`);
+  console.log(`[build_bda_db] spaghetti present: ${hasSpaghetti}`);
   console.log(`[build_bda_db] whole-egg equivalent present: ${hasUovoIntero}`);
-  if (!hasPasta) console.log('[build_bda_db] WARNING: nessuna voce "pasta" trovata in BDA.');
+  if (!hasPasta || !hasSpaghetti) {
+    const missing = [!hasPasta ? 'pasta' : null, !hasSpaghetti ? 'spaghetti' : null].filter(Boolean).join(', ');
+    throw new Error(`Sanity check fallita: nessuna voce contenente ${missing} trovata in name/aliases.`);
+  }
 }
 
 main().catch((error) => {

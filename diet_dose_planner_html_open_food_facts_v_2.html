@@ -276,7 +276,7 @@
 
     <div id="dbErrorBanner" class="card" style="display:none; margin-top:16px; border-color:rgba(255,120,120,.45); background:rgba(120,20,20,.35);">
       <div class="bd">
-        <b>Errore database locale:</b> impossibile caricare <code>data/foods_it_master.json</code>.
+        <b>Errore database locale:</b> impossibile caricare <code>data/foods_it_master.json</code> / <code>data/foods_it_master.js</code>.
         Verifica che il file esista e sia un JSON valido. La ricerca è disabilitata.
       </div>
     </div>
@@ -406,6 +406,7 @@
     </div>
   </div>
 
+<script src="./data/foods_it_master.js"></script>
 <script>
 /* ---------------------------
    Background animation (soft neon blobs)
@@ -564,6 +565,7 @@ let localFoodsCache = null;
 let baseFoodsCache = null;
 let dbLoadError = '';
 let customFoods = load('customFoods', []);
+const MASTER_DB_CACHE_KEY = LS('foodsMasterCache');
 
 function setDbStatus(isOk, message=''){
   const banner = $('dbErrorBanner');
@@ -635,6 +637,16 @@ function mapLocalFoods(raw){
 
 async function loadLocalFoods(){
   if(localFoodsCache) return localFoodsCache;
+
+  const scriptDb = Array.isArray(window.FOODS_IT_MASTER) ? window.FOODS_IT_MASTER : null;
+  if(scriptDb && scriptDb.length){
+    baseFoodsCache = mapLocalFoods(scriptDb);
+    localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+    try{ localStorage.setItem(MASTER_DB_CACHE_KEY, JSON.stringify(scriptDb)); }catch(_e){}
+    setDbStatus(true);
+    return localFoodsCache;
+  }
+
   const dbFile = './data/foods_it_master.json';
   try{
     const raw = await readLocalJson(dbFile);
@@ -642,12 +654,23 @@ async function loadLocalFoods(){
     if(!mapped.length) throw new Error(`${dbFile} vuoto o non valido`);
     baseFoodsCache = mapped;
     localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+    try{ localStorage.setItem(MASTER_DB_CACHE_KEY, JSON.stringify(raw)); }catch(_e){}
     setDbStatus(true);
     return localFoodsCache;
   }catch(e){
+    try{
+      const cached = JSON.parse(localStorage.getItem(MASTER_DB_CACHE_KEY) || '[]');
+      const mapped = mapLocalFoods(cached);
+      if(mapped.length){
+        baseFoodsCache = mapped;
+        localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+        setDbStatus(true);
+        return localFoodsCache;
+      }
+    }catch(_e){}
+
     const lastErr = e?.message || String(e);
-    const protocolHint = location.protocol === 'file:' ? ' Avvia la pagina con un server locale per permettere il caricamento JSON.' : '';
-    setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
+    setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).`);
     throw new Error(lastErr);
   }
 }

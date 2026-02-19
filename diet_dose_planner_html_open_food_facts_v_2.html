@@ -1,0 +1,860 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Diet Dose Planner • UC-friendly (Open Food Facts)</title>
+  <style>
+    :root{
+      --bg:#050507;
+      --card: rgba(255,255,255,.08);
+      --stroke: rgba(255,255,255,.12);
+      --text: rgba(255,255,255,.92);
+      --muted: rgba(255,255,255,.62);
+      --muted2: rgba(255,255,255,.45);
+      --shadow: 0 20px 80px rgba(0,0,0,.55);
+      --radius: 22px;
+      --radius2: 28px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      overflow-x:hidden;
+    }
+
+    /* Animated background blobs */
+    .bg-wrap{ position:fixed; inset:0; pointer-events:none; z-index:0; }
+    canvas#bg{ width:100%; height:100%; display:block; }
+    .noise{
+      position:absolute; inset:-50px;
+      background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/></filter><rect width='180' height='180' filter='url(%23n)' opacity='0.06'/></svg>");
+      opacity:.35;
+      mix-blend-mode: overlay;
+    }
+
+    .wrap{ position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:28px 16px 40px; }
+    header{ display:flex; gap:14px; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; }
+    .title small{ color:var(--muted); display:block; margin-bottom:6px; }
+    .title h1{ margin:0; font-size: clamp(26px, 3vw, 40px); letter-spacing:-0.02em; }
+
+    .pills{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .pill{
+      padding:7px 10px; border-radius:999px; font-size:12px;
+      background: rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.10);
+      color: rgba(255,255,255,.86);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn{
+      border:1px solid var(--stroke);
+      background: rgba(255,255,255,.08);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 18px;
+      cursor:pointer;
+      transition: transform .08s ease, background .15s ease;
+    }
+    .btn:hover{ background: rgba(255,255,255,.12); }
+    .btn:active{ transform: translateY(1px); }
+    .btn.primary{ background: rgba(255,255,255,.18); }
+    .btn.primary:hover{ background: rgba(255,255,255,.24); }
+
+    .grid{ display:grid; grid-template-columns: 1.4fr .9fr; gap:14px; margin-top:16px; }
+    @media (max-width: 980px){ .grid{ grid-template-columns: 1fr; } }
+
+    .card{
+      background: var(--card);
+      border:1px solid var(--stroke);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      overflow:hidden;
+    }
+    .card .hd{
+      padding:16px 16px 12px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    }
+    .card .hd .kicker{ color: var(--muted); font-size:13px; }
+    .card .hd .h2{ font-weight:650; letter-spacing:-0.01em; }
+    .card .bd{ padding:16px; }
+
+    label{ display:block; color:var(--muted); font-size:12px; margin-bottom:6px; }
+    input, select{
+      width:100%;
+      padding:11px 12px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.10);
+      color: var(--text);
+      outline:none;
+    }
+    input::placeholder{ color: rgba(255,255,255,.35); }
+
+    .row{ display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width: 640px){ .row{ grid-template-columns: 1fr; } }
+
+    .muted{ color: var(--muted2); font-size:12px; line-height:1.35; }
+
+    .list{ display:flex; flex-direction:column; gap:10px; margin-top:12px; }
+    .item{
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      padding:12px;
+      display:flex; justify-content:space-between; gap:12px;
+    }
+    .item b{ display:block; margin-bottom:2px; }
+    .item .meta{ color: var(--muted); font-size:12px; }
+    .item .right{ text-align:right; }
+
+    .bar{
+      height:10px; border-radius:999px;
+      background: rgba(255,255,255,.10);
+      overflow:hidden;
+      border:1px solid rgba(255,255,255,.08);
+    }
+    .bar > i{ display:block; height:100%; background: rgba(255,255,255,.35); width: 0%; }
+    .kv{ display:flex; justify-content:space-between; gap:12px; font-size:12px; color: var(--muted); margin: 6px 0 8px; }
+
+    table{ width:100%; border-collapse:separate; border-spacing:0 8px; font-size:13px; }
+    td{ padding:10px 10px; background: rgba(0,0,0,.22); border:1px solid rgba(255,255,255,.10); }
+    td:first-child{ border-radius:16px 0 0 16px; }
+    td:last-child{ border-radius:0 16px 16px 0; text-align:right; font-family: var(--mono); }
+
+    .x{ border:none; background:transparent; color:rgba(255,255,255,.75); cursor:pointer; font-size:16px; line-height:1; padding:0 6px; }
+
+    .toggle{
+      display:flex; gap:10px; align-items:center;
+      padding:10px 12px;
+      border-radius: 18px;
+      background: rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .toggle input{ width:auto; transform: translateY(1px); }
+
+    footer{ margin-top:14px; color:var(--muted2); font-size:12px; }
+  </style>
+</head>
+<body>
+  <div class="bg-wrap">
+    <canvas id="bg"></canvas>
+    <div class="noise"></div>
+  </div>
+
+  <div class="wrap">
+    <header>
+      <div class="title">
+        <small>Dose Planner • UC-friendly • Open Food Facts • dosi fisse per pasto</small>
+        <h1>Diet Dose Planner (HTML)</h1>
+        <div class="pills" id="pills"></div>
+      </div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <div class="toggle" title="Allenamento alle 13:00: aumenta carburante su spuntino mattina + pranzo">
+          <input type="checkbox" id="isWorkout" />
+          <label for="isWorkout" style="margin:0; color:rgba(255,255,255,.85); font-size:12px;">Giorno di allenamento (13:00)</label>
+        </div>
+        <button class="btn" id="btnSettings">Impostazioni</button>
+        <button class="btn" id="btnReset">Reset oggi</button>
+      </div>
+    </header>
+
+    <div class="grid">
+      <!-- Left -->
+      <div class="card">
+        <div class="hd">
+          <div>
+            <div class="kicker">Scrivi un alimento (database online)</div>
+            <div class="h2">Cerca (Open Food Facts) → aggiungi → dosi per il pasto</div>
+          </div>
+          <div style="display:flex; gap:10px; align-items:center;">
+            <select id="mealType" style="width: 220px;">
+              <option value="breakfast">Colazione</option>
+              <option value="snack1">Spuntino mattina</option>
+              <option value="lunch" selected>Pranzo</option>
+              <option value="snack2">Spuntino pomeriggio</option>
+              <option value="dinner">Cena</option>
+            </select>
+            <button class="btn primary" id="btnLog">Registra pasto</button>
+          </div>
+        </div>
+
+        <div class="bd">
+          <div class="row">
+            <div>
+              <label>Cerca alimento</label>
+              <input id="q" placeholder="Es: avocado, uova, riso basmati, yogurt greco, pollo..." />
+              <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+                <button class="btn" id="btnSearch">Cerca</button>
+                <button class="btn" id="btnClearMeal">Svuota selezione pasto</button>
+              </div>
+              <div class="muted" style="margin-top:8px">
+                Fonte dati: <b>Open Food Facts</b> (ottimo per prodotti, variabile per alimenti generici). Se una voce è incompleta, scegli un altro risultato.
+              </div>
+            </div>
+
+            <div>
+              <label>Come funziona la dose (importantissimo)</label>
+              <div class="muted">
+                Le dosi sono calcolate <b>solo</b> su target giornalieri + ripartizione del pasto (e toggle allenamento).<br/>
+                <b>NON</b> si auto-regola su quanto hai già mangiato: se fai il matto è un problema tuo 😄
+              </div>
+            </div>
+          </div>
+
+          <div class="list" id="results"></div>
+
+          <div style="margin-top:14px; display:grid; grid-template-columns: 1fr 1fr; gap:12px;">
+            <div class="card" style="box-shadow:none;">
+              <div class="hd">
+                <div>
+                  <div class="kicker">Pasto corrente</div>
+                  <div class="h2">Ingredienti selezionati</div>
+                </div>
+                <div class="kicker">obiettivo pasto: <span id="mealKcal">—</span> kcal</div>
+              </div>
+              <div class="bd">
+                <div id="mealItems" class="list"></div>
+                <div style="margin-top:12px;">
+                  <div class="kv"><span>Fibre insolubili (rischio)</span><span id="mealScore">—</span></div>
+                  <div class="bar"><i id="scoreBar"></i></div>
+                  <div class="kv" style="margin-top:6px;"><span>1 ok</span><span>10 evita</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="box-shadow:none;">
+              <div class="hd">
+                <div>
+                  <div class="kicker">Dosi suggerite</div>
+                  <div class="h2">Grammi per ingrediente</div>
+                </div>
+              </div>
+              <div class="bd">
+                <table id="doseTable"></table>
+
+                <div style="margin-top:12px;">
+                  <div class="kv"><span>kcal</span><span id="mKcal">—</span></div>
+                  <div class="kv"><span>Proteine</span><span id="mP">—</span></div>
+                  <div class="kv"><span>Carbo</span><span id="mC">—</span></div>
+                  <div class="kv"><span>Grassi</span><span id="mF">—</span></div>
+                  <div class="kv"><span>Fibre totali (stima)</span><span id="mFi">—</span></div>
+                  <div class="muted">
+                    Lo score 1–10 è euristico: <b>fibre totali</b> + parole trigger (legumi, integrale, cavoli, insalate…). Puoi correggerlo alimento per alimento.
+                  </div>
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Right -->
+      <div class="card">
+        <div class="hd">
+          <div>
+            <div class="kicker">Dashboard giornata</div>
+            <div class="h2">Tracking (facoltativo)</div>
+          </div>
+        </div>
+        <div class="bd">
+          <div id="dash"></div>
+
+          <div style="margin-top:12px" class="card" style="box-shadow:none;">
+            <div class="hd">
+              <div>
+                <div class="kicker">Registro di oggi</div>
+                <div class="h2">Pasti registrati</div>
+              </div>
+            </div>
+            <div class="bd" id="log"></div>
+          </div>
+
+          <footer>
+            Dati nutrizionali: Open Food Facts API. (world.openfoodfacts.org)
+          </footer>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+/* ---------------------------
+   Background animation (soft neon blobs)
+---------------------------- */
+(function(){
+  const c = document.getElementById('bg');
+  const ctx = c.getContext('2d');
+  let w, h, t=0;
+
+  const blobs = [
+    {x:0.2, y:0.25, r:260, a:0.42, vx:0.00035, vy:0.00025, baseHue: 210}, // blue
+    {x:0.78,y:0.35, r:320, a:0.34, vx:-0.00028,vy:0.00022, baseHue: 275}, // violet
+    {x:0.45,y:0.85, r:360, a:0.28, vx:0.00020,vy:-0.00026, baseHue: 315}, // magenta
+  ];
+
+  function resize(){
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+    w = c.width = Math.floor(window.innerWidth * dpr);
+    h = c.height = Math.floor(window.innerHeight * dpr);
+    c.style.width = window.innerWidth + 'px';
+    c.style.height = window.innerHeight + 'px';
+    ctx.setTransform(1,0,0,1,0,0);
+  }
+  window.addEventListener('resize', resize);
+  resize();
+
+  function draw(){
+    t += 0.01;
+    ctx.clearRect(0,0,w,h);
+    ctx.fillStyle = '#050507';
+    ctx.fillRect(0,0,w,h);
+
+    for(const b of blobs){
+      b.x += b.vx * (1 + 0.6*Math.sin(t*0.8));
+      b.y += b.vy * (1 + 0.6*Math.cos(t*0.7));
+      if(b.x < -0.2) b.x = 1.2;
+      if(b.x > 1.2) b.x = -0.2;
+      if(b.y < -0.2) b.y = 1.2;
+      if(b.y > 1.2) b.y = -0.2;
+
+      const cx = b.x*w, cy = b.y*h;
+      const rr = b.r * (0.85 + 0.25*Math.sin(t*0.9 + b.x*8));
+
+      // Neon hue shift: slow RGB-like drift
+      const hue = (((b.baseHue ?? 220) + t*18 + (Math.sin(t*0.7 + b.r)*30)) % 360);
+      const hue2 = (hue + 40) % 360;
+
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rr*2.2);
+      grad.addColorStop(0, `hsla(${hue}, 100%, 70%, ${b.a})`);
+      grad.addColorStop(0.35, `hsla(${hue2}, 100%, 65%, ${b.a*0.35})`);
+      grad.addColorStop(1, `hsla(${hue2}, 100%, 60%, 0)`);
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rr*2.2, 0, Math.PI*2);
+      ctx.fill();
+    }
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+/* ---------------------------
+   App state & helpers
+---------------------------- */
+const LS = (k) => 'dietDosePlannerHTML_OFF:' + k;
+const $ = (id) => document.getElementById(id);
+const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
+const r1 = (n)=>Math.round(n);
+const r01 = (n)=>Math.round(n*10)/10;
+
+const DEFAULT_TARGETS = { kcal: 2900, protein: 125, carbs: 380, fat: 90 };
+
+// Workout bump (training day). Adds ~250 kcal total.
+// +50g carbs (200 kcal) +5g protein (20 kcal) +3g fat (27 kcal) ~= 247 kcal.
+const WORKOUT_BUMP = { kcal: 250, protein: 5, carbs: 50, fat: 3 };
+
+// Base split (rest day)
+const SPLIT_REST = { breakfast: .22, snack1: .10, lunch: .28, snack2: .10, dinner: .30 };
+// Workout day @13:00: more fuel pre+post (snack1 + lunch), slightly less at dinner
+const SPLIT_WORKOUT_13 = { breakfast: .20, snack1: .13, lunch: .32, snack2: .10, dinner: .25 };
+
+let targets = load('targets', DEFAULT_TARGETS);
+let isWorkout = load('isWorkout', false);
+$('isWorkout').checked = !!isWorkout;
+
+let meal = []; // selected foods for current meal: {name, per100:{kcal,protein,carbs,fat,fiber}, score, source, hint}
+let log  = load('log', []); // tracking only; DOES NOT affect doses
+
+function todayKey(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function load(key, fallback){
+  try{ const raw = localStorage.getItem(LS(key)); return raw ? JSON.parse(raw) : fallback; }
+  catch(e){ return fallback; }
+}
+function save(key, value){ localStorage.setItem(LS(key), JSON.stringify(value)); }
+
+function sumMacros(items){
+  return items.reduce((a,it)=>{
+    a.kcal += it.kcal||0;
+    a.protein += it.protein||0;
+    a.carbs += it.carbs||0;
+    a.fat += it.fat||0;
+    a.fiber += it.fiber||0;
+    return a;
+  }, {kcal:0,protein:0,carbs:0,fat:0,fiber:0});
+}
+function macrosForGrams(per100, grams){
+  const m = grams/100;
+  return {
+    kcal: (per100.kcal||0)*m,
+    protein:(per100.protein||0)*m,
+    carbs:(per100.carbs||0)*m,
+    fat:(per100.fat||0)*m,
+    fiber:(per100.fiber||0)*m
+  };
+}
+function weightedScore(arr){
+  const totG = arr.reduce((s,x)=>s+(x.grams||0),0) || 1;
+  return arr.reduce((s,x)=>s+(x.grams||0)*(x.score||5),0)/totG;
+}
+
+/* ---------------------------
+   Insoluble-fiber risk score (heuristic)
+---------------------------- */
+const TRIGGERS = [
+  {re:/legum|ceci|fagiol|lentic|pisell/i, add:3},
+  {re:/brocc|cavol|bruxell|verza|cavolf/i, add:3},
+  {re:/integral|crusca|segale/i, add:2},
+  {re:/insalat|cicori|radicch|lattug|spinac/i, add:2},
+  {re:/semi|chia|lino|sesamo/i, add:2},
+  {re:/frutta\s*secca|mandorl|noc|arachid/i, add:2},
+];
+function guessScore(name, fiberPer100){
+  let s = 1;
+  s += clamp((fiberPer100||0)/2, 0, 5);
+  for(const t of TRIGGERS){ if(t.re.test(name)) s += t.add; }
+  return clamp(s,1,10);
+}
+
+/* ---------------------------
+   Open Food Facts lookup (ingredient-first)
+---------------------------- */
+async function offSearch(q){
+  const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=24`;
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('OFF search failed');
+  const data = await res.json();
+  const products = (data.products||[]).slice(0,24);
+
+  // Prefer basic food groups when available
+  const ALLOWED_PNNS2 = new Set([
+    'Fruits and vegetables',
+    'Cereals and potatoes',
+    'Meat',
+    'Fish and seafood',
+    'Milk and dairy products',
+    'Eggs',
+    'Fats',
+    'Beverages'
+  ]);
+
+  const isRecipeish = (name) => /\b(ricetta|recipe|recette|piatto|dish|menu|meal|ready\s*meal|prepared\s*meal|insalata|salad|zuppa|soup)\b/i.test(name);
+
+  const picked = products
+    .map(p=>({p, name: (p.product_name || p.generic_name || p.brands || q || '').trim()}))
+    .filter(({p,name})=>{
+      if(!name) return false;
+      if(isRecipeish(name)) return false;
+
+      // prefer nutrition per 100g (ingredients are usually per 100g)
+      if(p.nutrition_data_per && String(p.nutrition_data_per).toLowerCase() !== '100g') return false;
+
+      // if group exists, keep only “basic” groups
+      if(p.pnns_groups_2 && !ALLOWED_PNNS2.has(p.pnns_groups_2)) return false;
+
+      // must have at least some nutrition
+      const n = p.nutriments || {};
+      const hasMacros =
+        (n['energy-kcal_100g'] ?? n['energy_kcal_100g'] ?? n['proteins_100g'] ?? n['carbohydrates_100g'] ?? n['fat_100g']) != null;
+      return hasMacros;
+    })
+    .slice(0,8);
+
+  const fallback = products.slice(0,8).map(p=>({p, name:(p.product_name || p.generic_name || p.brands || q || '').trim()}));
+  const list = picked.length ? picked : fallback;
+
+  return list.map(({p,name})=>{
+    const n = p.nutriments || {};
+    const per100 = {
+      kcal: Number(n['energy-kcal_100g'] ?? n['energy_kcal_100g'] ?? 0),
+      protein: Number(n['proteins_100g'] ?? 0),
+      carbs: Number(n['carbohydrates_100g'] ?? 0),
+      fat: Number(n['fat_100g'] ?? 0),
+      fiber: Number(n['fiber_100g'] ?? 0),
+    };
+
+    const hint = p.pnns_groups_2 ? `(${p.pnns_groups_2})` : (p.brands ? `(${p.brands})` : (p.quantity ? `(${p.quantity})` : ''));
+    const score = guessScore(name, per100.fiber);
+
+    return { name, per100, score, source:'OpenFoodFacts', hint };
+  });
+}
+
+/* ---------------------------
+   Dosing logic (fixed per-meal targets)
+   - NO auto-adjust based on previous meals
+---------------------------- */
+function splitForDay(){
+  return $('isWorkout').checked ? SPLIT_WORKOUT_13 : SPLIT_REST;
+}
+
+function effectiveTargets(){
+  if(!$('isWorkout').checked) return { ...targets };
+  return {
+    kcal: targets.kcal + WORKOUT_BUMP.kcal,
+    protein: targets.protein + WORKOUT_BUMP.protein,
+    carbs: targets.carbs + WORKOUT_BUMP.carbs,
+    fat: targets.fat + WORKOUT_BUMP.fat,
+  };
+}
+
+function mealTargetFor(type){
+  const split = splitForDay();
+  const frac = split[type] ?? 0.25;
+  const T = effectiveTargets();
+  return {
+    kcal: T.kcal*frac,
+    protein: T.protein*frac,
+    carbs: T.carbs*frac,
+    fat: T.fat*frac
+  };
+}
+
+function dominant(per100){
+  const p=per100.protein||0, c=per100.carbs||0, f=per100.fat||0;
+  const m=Math.max(p,c,f);
+  return (m===p)?'protein':(m===c)?'carb':'fat';
+}
+
+function suggestDoses(){
+  const type = $('mealType').value;
+  const target = mealTargetFor(type);
+
+  // start from sane bases
+  let doses = meal.map(f=>{
+    let base = 100;
+    const dom = dominant(f.per100);
+    if(dom==='protein') base=200;
+    if(dom==='carb') base=120;
+    if(dom==='fat') base=35;
+    if(/olio|burro/i.test(f.name)) base=15;
+    return { ...f, grams: base };
+  });
+
+  // helper: current macros
+  const cur = () => sumMacros(doses.map(d=>macrosForGrams(d.per100, d.grams)));
+
+  // iterative fill deficits
+  function fill(macroKey){
+    const field = macroKey;
+    const totals = cur();
+    let deficit = target[field] - totals[field];
+    if(deficit <= 0.5) return;
+
+    // best density for that macro
+    const best = doses
+      .filter(d=> (d.per100[field]||0) > 0)
+      .sort((a,b)=> (b.per100[field]||0) - (a.per100[field]||0))[0];
+    if(!best) return;
+
+    const perG = (best.per100[field]||0)/100;
+    if(perG<=0) return;
+    const addG = clamp(deficit/perG, 0, 90);
+    best.grams = clamp(best.grams + addG, 0, 900);
+  }
+
+  for(let i=0;i<7;i++){
+    fill('protein');
+    fill('carbs');
+    fill('fat');
+  }
+
+  // round + clamp
+  doses = doses.map(d=>{
+    let g = d.grams;
+    if(/olio|burro/i.test(d.name)) g = Math.round(g/5)*5;
+    else g = Math.round(g/10)*10;
+    g = clamp(g, 0, 900);
+    return { ...d, grams:g };
+  });
+
+  return doses;
+}
+
+/* ---------------------------
+   UI rendering
+---------------------------- */
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, (m)=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'
+  })[m]);
+}
+
+function renderPills(){
+  const tk = todayKey();
+  const split = splitForDay();
+  const T = effectiveTargets();
+  $('pills').innerHTML = `
+    <span class="pill">Target: ${T.kcal} kcal${$('isWorkout').checked ? ' (+WO)' : ''}</span>
+    <span class="pill">P ${T.protein}g</span>
+    <span class="pill">C ${T.carbs}g</span>
+    <span class="pill">F ${T.fat}g</span>
+    <span class="pill">Oggi: ${tk}</span>
+    <span class="pill">${$('isWorkout').checked ? 'Allenamento 13:00' : 'Riposo'}</span>
+    <span class="pill">Split: col ${Math.round(split.breakfast*100)}% • sp1 ${Math.round(split.snack1*100)}% • pran ${Math.round(split.lunch*100)}% • sp2 ${Math.round(split.snack2*100)}% • cena ${Math.round(split.dinner*100)}%</span>
+  `;
+}
+
+function totalsToday(){
+  const tk=todayKey();
+  const entries = log.filter(e=>e.day===tk);
+  const items = entries.flatMap(e=>e.items);
+  return sumMacros(items);
+}
+
+function renderDashboard(){
+  const t = totalsToday();
+  const T = effectiveTargets();
+  const rows = [
+    ['Calorie', t.kcal, T.kcal, 'kcal'],
+    ['Proteine', t.protein, T.protein, 'g'],
+    ['Carbo', t.carbs, T.carbs, 'g'],
+    ['Grassi', t.fat, T.fat, 'g'],
+  ];
+  const html = rows.map(([lab,val,tgt,unit])=>{
+    const pct = clamp((val/(tgt||1))*100, 0, 140);
+    return `
+      <div style="margin-bottom:12px;">
+        <div class="kv"><span>${lab}</span><span>${r1(val)}/${r1(tgt)} ${unit}</span></div>
+        <div class="bar"><i style="width:${pct}%;"></i></div>
+      </div>
+    `;
+  }).join('');
+  $('dash').innerHTML = html + `<div class="muted">Tracking facoltativo: non influenza le dosi.</div>`;
+}
+
+function prettyMealType(mt){
+  return ({
+    breakfast:'Colazione',
+    snack1:'Spuntino mattina',
+    lunch:'Pranzo',
+    snack2:'Spuntino pomeriggio',
+    dinner:'Cena'
+  })[mt] || mt;
+}
+
+function renderLog(){
+  const tk = todayKey();
+  const entries = log.filter(e=>e.day===tk);
+  if(!entries.length){
+    $('log').innerHTML = `<div class="muted">Nessun pasto registrato oggi.</div>`;
+    return;
+  }
+  $('log').innerHTML = entries.map(e=>{
+    const totals = sumMacros(e.items);
+    const score = weightedScore(e.items);
+    const time = new Date(e.createdAt).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+    return `
+      <div class="item">
+        <div>
+          <b>${prettyMealType(e.mealType)}</b>
+          <div class="meta">${time} • ${r1(totals.kcal)} kcal • P ${r1(totals.protein)}g • C ${r1(totals.carbs)}g • F ${r1(totals.fat)}g • score ${r01(score)}/10</div>
+          <div class="meta">${e.items.map(it=>`${escapeHtml(it.name)} ${r1(it.grams)}g`).join(' · ')}</div>
+        </div>
+        <div class="right">
+          <button class="x" onclick="removeEntry('${e.id}')">✕</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function renderMeal(){
+  const type = $('mealType').value;
+  const mt = mealTargetFor(type);
+  $('mealKcal').textContent = r1(mt.kcal);
+
+  if(!meal.length){
+    $('mealItems').innerHTML = `<div class="muted">Nessun ingrediente selezionato.</div>`;
+    $('doseTable').innerHTML = '';
+    $('mealScore').textContent = '—';
+    $('scoreBar').style.width = '0%';
+    $('mKcal').textContent = '—';
+    $('mP').textContent = '—';
+    $('mC').textContent = '—';
+    $('mF').textContent = '—';
+    $('mFi').textContent = '—';
+    return;
+  }
+
+  $('mealItems').innerHTML = meal.map((f,idx)=>`
+    <div class="item">
+      <div>
+        <b>${escapeHtml(f.name)} <span class="meta">${escapeHtml(f.hint||'')}</span></b>
+        <div class="meta">Fonte: ${f.source} • per 100g: ${r1(f.per100.kcal)} kcal · P ${r01(f.per100.protein)} · C ${r01(f.per100.carbs)} · F ${r01(f.per100.fat)} · Fib ${r01(f.per100.fiber)}</div>
+        <div class="meta">Score: <b>${r01(f.score)}/10</b> (modificabile)</div>
+      </div>
+      <div class="right">
+        <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end;">
+          <input style="width:86px; text-align:right;" type="number" min="1" max="10" step="0.5"
+            value="${f.score}"
+            onchange="setFoodScore(${idx}, this.value)" />
+          <button class="x" onclick="removeMealItem(${idx})">✕</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  const doses = suggestDoses();
+  const macroItems = doses.map(d=> macrosForGrams(d.per100, d.grams));
+  const totals = sumMacros(macroItems);
+  const score = weightedScore(doses);
+
+  $('doseTable').innerHTML = doses.map(d=>`
+    <tr>
+      <td>${escapeHtml(d.name)}</td>
+      <td>${r1(d.grams)} g</td>
+    </tr>
+  `).join('');
+
+  $('mKcal').textContent = `${r1(totals.kcal)} kcal`;
+  $('mP').textContent = `${r1(totals.protein)} g`;
+  $('mC').textContent = `${r1(totals.carbs)} g`;
+  $('mF').textContent = `${r1(totals.fat)} g`;
+  $('mFi').textContent = `${r01(totals.fiber)} g`;
+
+  $('mealScore').textContent = `${r01(score)}/10`;
+  const pct = clamp(((score-1)/9)*100, 0, 100);
+  $('scoreBar').style.width = pct + '%';
+}
+
+function renderAll(){
+  renderPills();
+  renderDashboard();
+  renderLog();
+  renderMeal();
+}
+
+/* ---------------------------
+   Actions
+---------------------------- */
+window.removeMealItem = function(idx){
+  meal.splice(idx,1);
+  renderMeal();
+}
+window.setFoodScore = function(idx, v){
+  meal[idx].score = clamp(Number(v)||5, 1, 10);
+  renderMeal();
+}
+window.removeEntry = function(id){
+  log = log.filter(e=>e.id!==id);
+  save('log', log);
+  renderAll();
+}
+
+$('btnReset').addEventListener('click', ()=>{
+  const tk=todayKey();
+  log = log.filter(e=>e.day!==tk);
+  save('log', log);
+  renderAll();
+});
+
+$('btnClearMeal').addEventListener('click', ()=>{
+  meal = [];
+  renderMeal();
+});
+
+$('mealType').addEventListener('change', ()=>{ renderMeal(); });
+
+$('isWorkout').addEventListener('change', ()=>{
+  isWorkout = $('isWorkout').checked;
+  save('isWorkout', isWorkout);
+  renderAll();
+});
+
+$('btnSettings').addEventListener('click', ()=>{
+  const msg =
+`Impostazioni rapide (target giornalieri):\n\nAttuali:\n- kcal: ${targets.kcal}\n- Proteine: ${targets.protein}g\n- Carbo: ${targets.carbs}g\n- Grassi: ${targets.fat}g\n\nInserisci 4 numeri separati da virgola: kcal,proteine,carbo,grassi\nEsempio: 3000,130,400,95`;
+  const ans = prompt(msg);
+  if(!ans) return;
+  const parts = ans.split(',').map(x=>Number(x.trim()));
+  if(parts.length!==4 || parts.some(x=>!isFinite(x) || x<=0)) return alert('Formato non valido.');
+  targets = {kcal: parts[0], protein: parts[1], carbs: parts[2], fat: parts[3]};
+  save('targets', targets);
+  renderAll();
+});
+
+$('btnSearch').addEventListener('click', searchAndRender);
+$('q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') searchAndRender(); });
+
+async function searchAndRender(){
+  const q = $('q').value.trim();
+  if(!q) return;
+
+  $('results').innerHTML = `<div class="muted">Cerco “${escapeHtml(q)}”…</div>`;
+
+  let results;
+  try{
+    results = await offSearch(q);
+  }catch(e){
+    $('results').innerHTML = `<div class="muted">Errore nella ricerca su Open Food Facts. Riprova.</div>`;
+    return;
+  }
+
+  if(!results.length){
+    $('results').innerHTML = `<div class="muted">Nessun risultato trovato. Prova un nome diverso.</div>`;
+    return;
+  }
+
+  window.__lastResults = results;
+
+  $('results').innerHTML = results.map((r, idx)=>`
+    <div class="item">
+      <div>
+        <b>${escapeHtml(r.name)} <span class="meta">${escapeHtml(r.hint||'')}</span></b>
+        <div class="meta">Fonte: ${r.source} • per 100g: ${r1(r.per100.kcal)} kcal · P ${r01(r.per100.protein)} · C ${r01(r.per100.carbs)} · F ${r01(r.per100.fat)} · Fib ${r01(r.per100.fiber)}</div>
+        <div class="meta">Score suggerito: <b>${r01(r.score)}/10</b></div>
+      </div>
+      <div class="right">
+        <button class="btn primary" onclick="addResult(${idx})">Aggiungi</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+window.addResult = function(idx){
+  const r = window.__lastResults[idx];
+  if(!r) return;
+  meal.push(r);
+  renderMeal();
+}
+
+$('btnLog').addEventListener('click', ()=>{
+  if(!meal.length) return alert('Aggiungi almeno un alimento al pasto.');
+  const doses = suggestDoses();
+
+  const items = doses.map(d=>{
+    const m = macrosForGrams(d.per100, d.grams);
+    return { name: d.name, grams: d.grams, score: d.score, ...m };
+  });
+
+  const entry = {
+    id: (crypto?.randomUUID?.() || String(Date.now()+Math.random())),
+    day: todayKey(),
+    mealType: $('mealType').value,
+    createdAt: new Date().toISOString(),
+    items
+  };
+
+  log.unshift(entry);
+  save('log', log);
+  renderAll();
+});
+
+renderAll();
+</script>
+</body>
+</html>

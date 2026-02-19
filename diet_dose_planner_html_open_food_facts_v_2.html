@@ -702,9 +702,7 @@ function singularizeWord(word){
 }
 
 function normalizeForMatch(s){
-  const n = normalizeText(s);
-  if(!n) return '';
-  return n.split(' ').map((w)=>singularizeWord(w)).join(' ').trim();
+  return normalizeText(s);
 }
 
 function mergeWithCustomFoods(baseFoods, customList){
@@ -748,37 +746,26 @@ function similarityScore(a,b){
 
 function rankQueryAgainstTokens(queryTokens, tokens){
   if(!queryTokens.length || !tokens.length) return null;
-  const bestPerToken = [];
+  const fullQuery = queryTokens.join(' ');
+  const bestSimilarity = Math.max(...queryTokens.map((q)=>Math.max(...tokens.map((t)=>similarityScore(q, t)))));
 
-  for(const q of queryTokens){
-    let best = null;
-    for(const token of tokens){
-      if(token === q){
-        best = { type: 0, similarity: 1 };
-        break;
-      }
-
-      if(token.startsWith(q)){
-        const sim = similarityScore(q, token);
-        if(!best || best.type > 1 || (best.type === 1 && sim > best.similarity)){
-          best = { type: 1, similarity: sim };
-        }
-      }
-
-      const sim = similarityScore(q, token);
-      if(sim >= 0.65 && (!best || best.type > 2 || (best.type === 2 && sim > best.similarity))){
-        best = { type: 2, similarity: sim };
-      }
-    }
-
-    if(!best) return null;
-    bestPerToken.push(best);
+  if(tokens.some((token)=>token === fullQuery)){
+    return { matchType: 0, similarity: 1 };
   }
 
-  return {
-    matchType: Math.max(...bestPerToken.map((x)=>x.type)),
-    similarity: bestPerToken.reduce((a,x)=>a+x.similarity,0) / bestPerToken.length
-  };
+  const hasPrefixMatch = tokens.some((token)=>
+    (fullQuery.length >= 3 && token.startsWith(fullQuery)) ||
+    (token.length >= 3 && fullQuery.startsWith(token))
+  );
+  if(hasPrefixMatch){
+    return { matchType: 1, similarity: bestSimilarity };
+  }
+
+  if(bestSimilarity >= 0.82){
+    return { matchType: 2, similarity: bestSimilarity };
+  }
+
+  return null;
 }
 
 function levenshtein(a,b){
@@ -799,24 +786,30 @@ function levenshtein(a,b){
 
 function localSearch(foods, term){
   const qn = normalizeForMatch(term);
+  const queryTokens = tokenizeWords(qn);
   if(!qn) return [];
 
   return foods
     .map((f)=>{
-      const nameNorm = normalizeForMatch(f.name);
-      const aliasNorm = (f.aliases || []).map((a)=>normalizeForMatch(a)).filter(Boolean);
-      if(nameNorm === qn){
-        return { f, priority: 0, similarity: 1 };
-      }
-      if(aliasNorm.includes(qn)){
-        return { f, priority: 1, similarity: 0.99 };
+      const candidates = [f.name, ...(f.aliases || [])]
+        .map((c)=>normalizeForMatch(c))
+        .filter(Boolean);
+
+      let best = null;
+      for(const candidate of candidates){
+        const candidateTokens = tokenizeWords(candidate);
+        const rank = rankQueryAgainstTokens(queryTokens, candidateTokens);
+        if(!rank) continue;
+        if(!best || rank.matchType < best.matchType || (rank.matchType === best.matchType && rank.similarity > best.similarity)){
+          best = rank;
+        }
       }
 
-      const nameSim = similarityScore(qn, nameNorm);
-      const aliasSim = aliasNorm.reduce((best, a)=>Math.max(best, similarityScore(qn, a)), 0);
-      const sim = Math.max(nameSim, aliasSim);
-      if(sim < 0.65) return null;
-      return { f, priority: 2, similarity: sim };
+      if(!best){
+        return null;
+      }
+
+      return { f, priority: best.matchType, similarity: best.similarity };
     })
     .filter(Boolean)
     .sort((a,b)=>(a.priority-b.priority) || (b.similarity-a.similarity) || (a.f.name.length-b.f.name.length))

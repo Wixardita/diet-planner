@@ -638,32 +638,41 @@ function mapLocalFoods(raw){
 async function loadLocalFoods(){
   if(localFoodsCache) return localFoodsCache;
 
-  const dbFile = './db/foods_it_bda_1109.json';
-  try{
-    const raw = await readLocalJson(dbFile);
-    const mapped = mapLocalFoods(raw);
-    if(!mapped.length) throw new Error(`${dbFile} vuoto o non valido`);
-    baseFoodsCache = mapped;
-    localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
-    try{ localStorage.setItem(MASTER_DB_CACHE_KEY, JSON.stringify(raw)); }catch(_e){}
-    setDbStatus(true);
-    return localFoodsCache;
-  }catch(e){
-    try{
-      const cached = JSON.parse(localStorage.getItem(MASTER_DB_CACHE_KEY) || '[]');
-      const mapped = mapLocalFoods(cached);
-      if(mapped.length){
-        baseFoodsCache = mapped;
-        localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
-        setDbStatus(true);
-        return localFoodsCache;
-      }
-    }catch(_e){}
+  const dbCandidates = ['./db/foods_it_bda_1109.json'];
+  let lastErr = 'DB non disponibile';
 
-    const lastErr = e?.message || String(e);
-    setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).`);
-    throw new Error(lastErr);
+  for(const dbFile of dbCandidates){
+    try{
+      const raw = await readLocalJson(dbFile);
+      const mapped = mapLocalFoods(raw);
+      if(!mapped.length) throw new Error(`${dbFile} vuoto o non valido`);
+      baseFoodsCache = mapped;
+      localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+      try{ localStorage.setItem(MASTER_DB_CACHE_KEY, JSON.stringify(raw)); }catch(_e){}
+      setDbStatus(true);
+      return localFoodsCache;
+    }catch(e){
+      lastErr = e?.message || String(e);
+    }
   }
+
+  try{
+    const cachedRaw = localStorage.getItem(MASTER_DB_CACHE_KEY) || localStorage.getItem(LS('foodsMasterCache')) || '[]';
+    const cached = JSON.parse(cachedRaw);
+    const mapped = mapLocalFoods(cached);
+    if(mapped.length){
+      baseFoodsCache = mapped;
+      localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+      setDbStatus(true);
+      return localFoodsCache;
+    }
+  }catch(_e){}
+
+  const protocolHint = (location.protocol === 'file:')
+    ? " Se stai aprendo l'HTML con file://, avvia un server locale (es. `python -m http.server`) e apri la pagina via http://localhost."
+    : '';
+  setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
+  throw new Error(lastErr);
 }
 
 function singularizeWord(word){

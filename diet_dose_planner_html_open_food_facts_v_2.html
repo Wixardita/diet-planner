@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Diet Dose Planner • UC-friendly (Open Food Facts)</title>
+  <title>Diet Dose Planner • UC-friendly (Database locale Italia)</title>
   <style>
     :root{
       --bg:#050507;
@@ -152,7 +152,7 @@
   <div class="wrap">
     <header>
       <div class="title">
-        <small>Dose Planner • UC-friendly • Open Food Facts • dosi fisse per pasto</small>
+        <small>Dose Planner • UC-friendly • Database locale (Italia) • dosi fisse per pasto</small>
         <h1>Diet Dose Planner (HTML)</h1>
         <div class="pills" id="pills"></div>
       </div>
@@ -166,13 +166,22 @@
       </div>
     </header>
 
+
+
+    <div id="dbErrorBanner" class="card" style="display:none; margin-top:16px; border-color:rgba(255,120,120,.45); background:rgba(120,20,20,.35);">
+      <div class="bd">
+        <b>Errore database locale:</b> impossibile caricare <code>foods.json</code>.
+        Verifica che il file esista e sia un JSON valido. La ricerca è disabilitata.
+      </div>
+    </div>
+
     <div class="grid">
       <!-- Left -->
       <div class="card">
         <div class="hd">
           <div>
-            <div class="kicker">Scrivi un alimento (database online)</div>
-            <div class="h2">Cerca (Open Food Facts) → aggiungi → dosi per il pasto</div>
+            <div class="kicker">Scrivi un alimento (database locale)</div>
+            <div class="h2">Cerca (Database locale Italia) → aggiungi → dosi per il pasto</div>
           </div>
           <div style="display:flex; gap:10px; align-items:center;">
             <select id="mealType" style="width: 220px;">
@@ -196,7 +205,7 @@
                 <button class="btn" id="btnClearMeal">Svuota selezione pasto</button>
               </div>
               <div class="muted" style="margin-top:8px">
-                Fonte dati: <b>USDA FoodData Central</b> con fallback Open Food Facts. Se una voce è incompleta, scegli un altro risultato.
+                Fonte dati: <b>Database locale (Italia)</b>. Ricerca sempre offline sul file locale.
               </div>
             </div>
 
@@ -280,7 +289,7 @@
           </div>
 
           <footer>
-            Dati nutrizionali: USDA FoodData Central (primario) + Open Food Facts (fallback).
+            Dati nutrizionali: Database locale (Italia), ricerca 100% offline.
           </footer>
         </div>
       </div>
@@ -430,33 +439,62 @@ function guessScore(name, fiberPer100){
 }
 
 /* ---------------------------
-   Local DB lookup + fuzzy + USDA fallback
+   Local DB lookup + fuzzy (offline only)
 ---------------------------- */
 let localFoodsCache = null;
+let dbLoadError = '';
+
+function setDbStatus(isOk, message=''){
+  const banner = $('dbErrorBanner');
+  const btn = $('btnSearch');
+  dbLoadError = isOk ? '' : message;
+  if(btn) btn.disabled = !isOk;
+  if(banner){
+    if(isOk){
+      banner.style.display = 'none';
+    }else{
+      banner.style.display = 'block';
+      banner.querySelector('.bd').innerHTML = `<b>Errore database locale:</b> ${escapeHtml(message)}. La ricerca è disabilitata.`;
+    }
+  }
+}
 
 async function loadLocalFoods(){
   if(localFoodsCache) return localFoodsCache;
-  try{
-    const res = await fetch('./foods.json', { cache: 'no-store' });
-    if(!res.ok) throw new Error('foods.json non disponibile');
-    const raw = await res.json();
-    localFoodsCache = (Array.isArray(raw) ? raw : []).map((f)=>({
-      name: String(f.name || '').trim(),
-      per100: {
-        kcal: Number(f.kcal_per100 || 0),
-        protein: Number(f.protein_per100 || 0),
-        carbs: Number(f.carbs_per100 || 0),
-        fat: Number(f.fat_per100 || 0),
-        fiber: Number(f.fiber_per100 || 0),
-      },
-      category: String(f.category || 'other'),
-      source: 'Locale',
-      hint: f.category ? `(${f.category})` : ''
-    })).filter((x)=>x.name);
-  }catch(e){
-    localFoodsCache = [];
+  const fileCandidates = ['./foods_it.json', './foods.json'];
+  let lastErr = 'foods.json non disponibile';
+
+  for(const file of fileCandidates){
+    try{
+      const res = await fetch(file, { cache: 'no-store' });
+      if(!res.ok) throw new Error(`${file} non disponibile`);
+      const raw = await res.json();
+      const mapped = (Array.isArray(raw) ? raw : []).map((f)=>({
+        name: String(f.name || '').trim(),
+        aliases: Array.isArray(f.aliases) ? f.aliases.map((a)=>String(a || '').trim()).filter(Boolean) : [],
+        per100: {
+          kcal: Number(f.kcal_per100 || 0),
+          protein: Number(f.protein_per100 || 0),
+          carbs: Number(f.carbs_per100 || 0),
+          fat: Number(f.fat_per100 || 0),
+          fiber: Number(f.fiber_per100 || 0),
+        },
+        category: String(f.category || 'other'),
+        source: 'Database locale (Italia)',
+        hint: f.category ? `(${f.category})` : ''
+      })).filter((x)=>x.name);
+
+      if(!mapped.length) throw new Error(`${file} vuoto o non valido`);
+      localFoodsCache = mapped;
+      setDbStatus(true);
+      return localFoodsCache;
+    }catch(e){
+      lastErr = e?.message || String(e);
+    }
   }
-  return localFoodsCache;
+
+  setDbStatus(false, `Impossibile caricare il database locale (${lastErr})`);
+  throw new Error(lastErr);
 }
 
 function normalizeText(s){
@@ -489,9 +527,17 @@ function localSearch(foods, term){
   const qn = normalizeText(term);
   if(!qn) return [];
   const exactish = foods
-    .map((f)=>({ f, n: normalizeText(f.name) }))
-    .filter(({n})=>n.includes(qn) || qn.includes(n))
-    .sort((a,b)=>a.n.length-b.n.length)
+    .map((f)=>{
+      const nameNorm = normalizeText(f.name);
+      const aliasesNorm = (f.aliases || []).map((a)=>normalizeText(a));
+      return { f, nameNorm, aliasesNorm };
+    })
+    .filter(({nameNorm, aliasesNorm})=>
+      nameNorm.includes(qn) ||
+      qn.includes(nameNorm) ||
+      aliasesNorm.some((a)=>a.includes(qn) || qn.includes(a))
+    )
+    .sort((a,b)=>a.nameNorm.length-b.nameNorm.length)
     .slice(0,8)
     .map(({f})=>({ ...f, score: guessScore(f.name, f.per100.fiber) }));
 
@@ -499,9 +545,10 @@ function localSearch(foods, term){
 
   return foods
     .map((f)=>{
-      const n = normalizeText(f.name);
-      const d = levenshtein(qn, n);
-      const ratio = d / Math.max(qn.length, n.length, 1);
+      const nameNorm = normalizeText(f.name);
+      const aliasNorms = (f.aliases || []).map((a)=>normalizeText(a));
+      const distances = [nameNorm, ...aliasNorms].map((n)=>levenshtein(qn, n) / Math.max(qn.length, n.length, 1));
+      const ratio = Math.min(...distances);
       return { f, ratio };
     })
     .filter((x)=>x.ratio <= 0.42)
@@ -510,112 +557,15 @@ function localSearch(foods, term){
     .map(({f})=>({ ...f, score: guessScore(f.name, f.per100.fiber) }));
 }
 
-async function usdaPrimarySearch(q){
-  const USDA_API_KEY = '9fSL6bV6V8az5qW2TjtMntbUkh6baYFiYcjr3Ftg';
-  const USDA_TYPES_PRIORITY = { 'Foundation': 0, 'SR Legacy': 1, 'Branded': 2, 'Survey (FNDDS)': 3, 'Survey': 3 };
-  const RECIPE_INDICATORS = ['with','and','style','flavor','prepared','recipe','meal','dish'];
-  const RECIPE_INDICATOR_RE = new RegExp(`\b(${RECIPE_INDICATORS.join('|')})\b`, 'i');
-
-  const terms = q.split(',').map(x=>x.trim()).filter(Boolean);
-  const queries = terms.length ? terms : [q.trim()];
-
-  function nutrientByName(nutrients, wanted){
-    const found = (nutrients || []).find(n => wanted.includes(String(n.nutrientName || '').trim()));
-    return Number(found?.value || 0) || 0;
-  }
-
-  function mapUsdaFood(food){
-    const name = String(food.description || '').trim();
-    const per100 = {
-      kcal: nutrientByName(food.foodNutrients, ['Energy']),
-      protein: nutrientByName(food.foodNutrients, ['Protein']),
-      carbs: nutrientByName(food.foodNutrients, ['Carbohydrate, by difference']),
-      fat: nutrientByName(food.foodNutrients, ['Total lipid (fat)']),
-      fiber: nutrientByName(food.foodNutrients, ['Fiber, total dietary'])
-    };
-    const hasCore = per100.kcal > 0 && (per100.protein > 0 || per100.carbs > 0 || per100.fat > 0);
-    if(!name || !hasCore || RECIPE_INDICATOR_RE.test(name)) return null;
-    const macroCompleteness = (per100.kcal>0) + (per100.protein>0) + (per100.carbs>0) + (per100.fat>0) + (per100.fiber>=0);
-    const dataTypePriority = USDA_TYPES_PRIORITY[food.dataType] ?? 99;
-    return {
-      name,
-      per100,
-      score: guessScore(name, per100.fiber),
-      source: 'USDA',
-      hint: food.dataType ? `(${food.dataType})` : '',
-      __rank: { macroCompleteness, dataTypePriority, nameLen: name.length }
-    };
-  }
-
-  async function searchUsdaTerm(term){
-    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(term)}&pageSize=8&api_key=${USDA_API_KEY}`;
-    try{
-      const res = await fetch(url);
-      if(!res.ok) return [];
-      const data = await res.json();
-      return (data.foods || [])
-        .map(mapUsdaFood)
-        .filter(Boolean)
-        .sort((a,b)=>
-          b.__rank.macroCompleteness - a.__rank.macroCompleteness ||
-          a.__rank.dataTypePriority - b.__rank.dataTypePriority ||
-          a.__rank.nameLen - b.__rank.nameLen
-        );
-    }catch(e){
-      return [];
-    }
-  }
-
-  const merged = [];
-  for(const term of queries){
-    const termResults = await searchUsdaTerm(term);
-    if(termResults.length) console.log(`[search] "${term}" source=USDA (fallback)`);
-    if(!termResults.length) console.log(`[search] "${term}" source=none (no local/USDA results)`);
-    merged.push(...termResults);
-  }
-
-  const deduped = [];
-  const seen = new Set();
-  for(const item of merged.sort((a,b)=>
-    b.__rank.macroCompleteness - a.__rank.macroCompleteness ||
-    a.__rank.dataTypePriority - b.__rank.dataTypePriority ||
-    a.__rank.nameLen - b.__rank.nameLen
-  )){
-    const key = item.name.toLowerCase();
-    if(seen.has(key)) continue;
-    seen.add(key);
-    deduped.push(item);
-    if(deduped.length >= 8) break;
-  }
-
-  return deduped.map(({__rank, ...it})=>it);
-}
-
-async function searchFoods(q){
+async function searchFoodsByTerm(q){
   const foods = await loadLocalFoods();
   const terms = q.split(',').map(x=>x.trim()).filter(Boolean);
   const queries = terms.length ? terms : [q.trim()];
 
-  const localMerged = [];
-  for(const term of queries){
-    const local = localSearch(foods, term);
-    if(local.length){
-      console.log(`[search] "${term}" source=local`);
-      localMerged.push(...local);
-    }
-  }
-
-  if(localMerged.length){
-    const seen = new Set();
-    return localMerged.filter((x)=>{
-      const k = x.name.toLowerCase();
-      if(seen.has(k)) return false;
-      seen.add(k);
-      return true;
-    }).slice(0,8);
-  }
-
-  return usdaPrimarySearch(q);
+  return queries.map((term)=>({
+    term,
+    results: localSearch(foods, term)
+  }));
 }
 
 /* ---------------------------
@@ -918,36 +868,55 @@ $('q').addEventListener('keydown', (e)=>{ if(e.key==='Enter') searchAndRender();
 async function searchAndRender(){
   const q = $('q').value.trim();
   if(!q) return;
+  if(dbLoadError){
+    $('results').innerHTML = `<div class="muted">Ricerca disabilitata: database locale non disponibile.</div>`;
+    return;
+  }
 
-  $('results').innerHTML = `<div class="muted">Cerco “${escapeHtml(q)}”…</div>`;
+  $('results').innerHTML = `<div class="muted">Cerco offline “${escapeHtml(q)}”…</div>`;
 
-  let results;
+  let grouped;
   try{
-    results = await searchFoods(q);
+    grouped = await searchFoodsByTerm(q);
   }catch(e){
-    $('results').innerHTML = `<div class="muted">Errore nella ricerca (database locale/USDA). Riprova.</div>`;
+    $('results').innerHTML = `<div class="muted">Errore nella ricerca locale. Verifica il file foods.json.</div>`;
     return;
   }
 
-  if(!results.length){
-    $('results').innerHTML = `<div class="muted">Nessun risultato trovato. Prova un nome diverso.</div>`;
+  if(!grouped.length){
+    $('results').innerHTML = `<div class="muted">Inserisci almeno un termine valido.</div>`;
     return;
   }
 
-  window.__lastResults = results;
+  const sections = [];
+  const flat = [];
+  for(const group of grouped){
+    const cards = group.results.map((r)=>{
+      const idx = flat.push(r) - 1;
+      return `
+        <div class="item">
+          <div>
+            <b>${escapeHtml(r.name)} <span class="meta">${escapeHtml(r.hint||'')}</span></b>
+            <div class="meta">Fonte: ${r.source} • per 100g: ${r1(r.per100.kcal)} kcal · P ${r01(r.per100.protein)} · C ${r01(r.per100.carbs)} · F ${r01(r.per100.fat)} · Fib ${r01(r.per100.fiber)}</div>
+            <div class="meta">Score suggerito: <b>${r01(r.score)}/10</b></div>
+          </div>
+          <div class="right">
+            <button class="btn primary" onclick="addResult(${idx})">Aggiungi</button>
+          </div>
+        </div>
+      `;
+    }).join('');
 
-  $('results').innerHTML = results.map((r, idx)=>`
-    <div class="item">
-      <div>
-        <b>${escapeHtml(r.name)} <span class="meta">${escapeHtml(r.hint||'')}</span></b>
-        <div class="meta">Fonte: ${r.source} • per 100g: ${r1(r.per100.kcal)} kcal · P ${r01(r.per100.protein)} · C ${r01(r.per100.carbs)} · F ${r01(r.per100.fat)} · Fib ${r01(r.per100.fiber)}</div>
-        <div class="meta">Score suggerito: <b>${r01(r.score)}/10</b></div>
+    sections.push(`
+      <div style="margin-top:10px;">
+        <div class="kicker" style="margin-bottom:8px;">Termine: <b>${escapeHtml(group.term)}</b></div>
+        ${cards || '<div class="muted">Nessun risultato locale per questo termine.</div>'}
       </div>
-      <div class="right">
-        <button class="btn primary" onclick="addResult(${idx})">Aggiungi</button>
-      </div>
-    </div>
-  `).join('');
+    `);
+  }
+
+  window.__lastResults = flat;
+  $('results').innerHTML = sections.join('');
 }
 
 window.addResult = function(idx){
@@ -979,7 +948,7 @@ $('btnLog').addEventListener('click', ()=>{
   renderAll();
 });
 
-renderAll();
+loadLocalFoods().catch(()=>{}).finally(()=>renderAll());
 </script>
 </body>
 </html>

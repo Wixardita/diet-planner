@@ -564,8 +564,94 @@ function guessScore(name, fiberPer100){
 let localFoodsCache = null;
 let baseFoodsCache = null;
 let dbLoadError = '';
+let dbMetaInfo = null;
 let customFoods = load('customFoods', []);
 const MASTER_DB_CACHE_KEY = LS('foodsBda1109Cache');
+const MASTER_DB_CACHE_HASH_KEY = LS('foodsBda1109CacheHash');
+
+let bundledFoodsLoadPromise = null;
+
+function mapLegacyCategory(cat){
+  const c = normalizeText(cat);
+  if(['protein','carne','pesce','uova','latticini','legumi'].includes(c)) return 'proteine';
+  if(['carb','cereali'].includes(c)) return 'cereali';
+  if(['vegetable','verdure'].includes(c)) return 'verdure';
+  if(['fruit','frutta'].includes(c)) return 'frutta';
+  if(['nut','frutta secca'].includes(c)) return 'frutta secca';
+  return c || 'altro';
+}
+
+function mapBundledFoods(raw){
+  return (Array.isArray(raw) ? raw : []).map((f)=>({
+    name: String(f.name || '').trim(),
+    aliases: Array.isArray(f.aliases) ? f.aliases.map((a)=>String(a || '').trim()).filter(Boolean) : [],
+    per100: {
+      kcal: Number(f?.per100?.kcal ?? f.kcal_per100 ?? f.kcal ?? 0),
+      protein: Number(f?.per100?.protein ?? f.protein_per100 ?? f.protein ?? 0),
+      carbs: Number(f?.per100?.carbs ?? f.carbs_per100 ?? f.carbs ?? 0),
+      fat: Number(f?.per100?.fat ?? f.fat_per100 ?? f.fat ?? 0),
+      fiber: Number(f?.per100?.fiber ?? f.fiber_per100 ?? f.fiber ?? 0),
+    },
+    category: mapLegacyCategory(String(f.category || 'altro')),
+    source: 'Database locale (bundle JS) • fallback file://',
+    hint: f.category ? `(${mapLegacyCategory(String(f.category || 'altro'))})` : ''
+  })).filter((x)=>x.name);
+}
+
+async function loadBundledFoodsJs(){
+  if(Array.isArray(window.FOODS_IT_DB) && window.FOODS_IT_DB.length){
+    return mapBundledFoods(window.FOODS_IT_DB);
+  }
+  if(Array.isArray(window.FOODS_IT_MASTER) && window.FOODS_IT_MASTER.length){
+    return mapBundledFoods(window.FOODS_IT_MASTER);
+  }
+
+  if(!bundledFoodsLoadPromise){
+    bundledFoodsLoadPromise = new Promise((resolve, reject)=>{
+      const script = document.createElement('script');
+      script.src = './foods_it.js';
+      script.async = true;
+      script.onload = ()=>resolve();
+      script.onerror = ()=>reject(new Error('Impossibile caricare foods_it.js'));
+      document.head.appendChild(script);
+    });
+  }
+
+  await bundledFoodsLoadPromise;
+
+  if(Array.isArray(window.FOODS_IT_DB) && window.FOODS_IT_DB.length){
+    return mapBundledFoods(window.FOODS_IT_DB);
+  }
+  if(Array.isArray(window.FOODS_IT_MASTER) && window.FOODS_IT_MASTER.length){
+    return mapBundledFoods(window.FOODS_IT_MASTER);
+  }
+  throw new Error('foods_it.js caricato ma dataset non disponibile');
+}
+
+function allowDbCacheFallback(){
+  const params = new URLSearchParams(location.search || '');
+  return params.get('allowDbCacheFallback') === '1';
+}
+
+function computeQuickHash(input){
+  const str = String(input || '');
+  let h = 2166136261;
+  for(let i=0;i<str.length;i++){
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0).toString(16).padStart(8,'0');
+}
+
+function updateDbMetaInfo(raw, sourceLabel){
+  const text = JSON.stringify(raw || []);
+  dbMetaInfo = {
+    source: sourceLabel || 'unknown',
+    bytes: text.length,
+    items: Array.isArray(raw) ? raw.length : 0,
+    hash: computeQuickHash(text)
+  };
+}
 
 function setDbStatus(isOk, message=''){
   const banner = $('dbErrorBanner');
@@ -646,9 +732,14 @@ async function loadLocalFoods(){
       const raw = await readLocalJson(dbFile);
       const mapped = mapLocalFoods(raw);
       if(!mapped.length) throw new Error(`${dbFile} vuoto o non valido`);
+      updateDbMetaInfo(raw, dbFile);
       baseFoodsCache = mapped;
       localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
-      try{ localStorage.setItem(MASTER_DB_CACHE_KEY, JSON.stringify(raw)); }catch(_e){}
+      try{
+        const rawText = JSON.stringify(raw);
+        localStorage.setItem(MASTER_DB_CACHE_KEY, rawText);
+        localStorage.setItem(MASTER_DB_CACHE_HASH_KEY, computeQuickHash(rawText));
+      }catch(_e){}
       setDbStatus(true);
       return localFoodsCache;
     }catch(e){
@@ -656,22 +747,49 @@ async function loadLocalFoods(){
     }
   }
 
-  try{
-    const cachedRaw = localStorage.getItem(MASTER_DB_CACHE_KEY) || localStorage.getItem(LS('foodsMasterCache')) || '[]';
-    const cached = JSON.parse(cachedRaw);
-    const mapped = mapLocalFoods(cached);
-    if(mapped.length){
-      baseFoodsCache = mapped;
-      localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
-      setDbStatus(true);
-      return localFoodsCache;
-    }
-  }catch(_e){}
+  if(allowDbCacheFallback()){
+    try{
+      const cachedRaw = localStorage.getItem(MASTER_DB_CACHE_KEY) || localStorage.getItem(LS('foodsMasterCache')) || '[]';
+      const cached = JSON.parse(cachedRaw);
+      const mapped = mapLocalFoods(cached);
+      if(mapped.length){
+        const cachedHash = computeQuickHash(cachedRaw);
+        const previousHash = localStorage.getItem(MASTER_DB_CACHE_HASH_KEY);
+        if(previousHash && previousHash !== cachedHash){
+          try{ localStorage.removeItem(MASTER_DB_CACHE_KEY); }catch(_e){}
+          try{ localStorage.removeItem(MASTER_DB_CACHE_HASH_KEY); }catch(_e){}
+        }else{
+          updateDbMetaInfo(cached, 'localStorage-cache');
+          baseFoodsCache = mapped;
+          localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+          setDbStatus(true);
+          return localFoodsCache;
+        }
+      }
+    }catch(_e){}
+  }
+
+  if(location.protocol === 'file:'){
+    try{
+      const bundled = await loadBundledFoodsJs();
+      if(bundled.length){
+        const bundledRaw = window.FOODS_IT_DB || window.FOODS_IT_MASTER || [];
+        updateDbMetaInfo(bundledRaw, 'bundled-js-fallback');
+        baseFoodsCache = bundled;
+        localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+        setDbStatus(true);
+        return localFoodsCache;
+      }
+    }catch(_e){}
+  }
 
   const protocolHint = (location.protocol === 'file:')
-    ? " Se stai aprendo l'HTML con file://, avvia un server locale (es. `python -m http.server`) e apri la pagina via http://localhost."
+    ? " Se stai aprendo l'HTML con file://, è disponibile fallback automatico su foods_it.js; in alternativa avvia un server locale (es. `python -m http.server`) e apri via http://localhost."
     : '';
-  setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
+  const fallbackHint = allowDbCacheFallback()
+    ? ''
+    : ' Fallback cache disattivato (usa ?allowDbCacheFallback=1 per abilitarlo temporaneamente).';
+  setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}${fallbackHint}`);
   throw new Error(lastErr);
 }
 
@@ -712,9 +830,20 @@ function normalizeText(s){
     .trim();
 }
 
-function tokenizeWords(s){
+const IT_STOPWORDS = new Set([
+  'a','ad','al','allo','ai','agli','all','agl','alla','alle',
+  'da','dal','dallo','dai','dagli','dall','dalla','dalle',
+  'di','del','dello','dei','degli','dell','della','delle',
+  'in','nel','nello','nei','negli','nell','nella','nelle',
+  'con','su','per','tra','fra',
+  'e','ed','o','od'
+]);
+
+function tokenizeWords(s, { removeStopwords = false } = {}){
   const n = normalizeText(s);
-  return n ? n.split(' ').filter(Boolean) : [];
+  if(!n) return [];
+  const words = n.split(' ').filter(Boolean);
+  return removeStopwords ? words.filter((w)=>!IT_STOPWORDS.has(w)) : words;
 }
 
 function similarityScore(a,b){
@@ -725,28 +854,51 @@ function similarityScore(a,b){
   return 1 - (d / Math.max(aa.length, bb.length, 1));
 }
 
+function tokenMatchScore(queryToken, token){
+  if(!queryToken || !token) return 0;
+  if(queryToken === token) return 1;
+
+  const shortest = Math.min(queryToken.length, token.length);
+  if(shortest >= 3 && (token.startsWith(queryToken) || queryToken.startsWith(token))) return 0.95;
+  if(shortest >= 4 && token.includes(queryToken)) return 0.9;
+
+  const sim = similarityScore(queryToken, token);
+  return sim >= 0.86 ? sim : 0;
+}
+
 function rankQueryAgainstTokens(queryTokens, tokens){
   if(!queryTokens.length || !tokens.length) return null;
+
+  let sum = 0;
+  let exactMatches = 0;
+  let prefixMatches = 0;
+
+  for(const q of queryTokens){
+    let bestForToken = 0;
+    for(const t of tokens){
+      bestForToken = Math.max(bestForToken, tokenMatchScore(q, t));
+    }
+    if(bestForToken <= 0) return null;
+    sum += bestForToken;
+    if(bestForToken === 1) exactMatches += 1;
+    else if(bestForToken >= 0.95) prefixMatches += 1;
+  }
+
+  const avgScore = sum / queryTokens.length;
   const fullQuery = queryTokens.join(' ');
-  const bestSimilarity = Math.max(...queryTokens.map((q)=>Math.max(...tokens.map((t)=>similarityScore(q, t)))));
+  const candidatePhrase = tokens.join(' ');
 
-  if(tokens.some((token)=>token === fullQuery)){
-    return { matchType: 0, similarity: 1 };
-  }
+  const exactPhrase = candidatePhrase === fullQuery;
+  const startsWithPhrase = fullQuery.length >= 3 && candidatePhrase.startsWith(fullQuery);
 
-  const hasPrefixMatch = tokens.some((token)=>
-    (fullQuery.length >= 3 && token.startsWith(fullQuery)) ||
-    (token.length >= 3 && fullQuery.startsWith(token))
-  );
-  if(hasPrefixMatch){
-    return { matchType: 1, similarity: bestSimilarity };
-  }
+  const matchType = exactPhrase ? 0 : (startsWithPhrase ? 1 : 2);
 
-  if(bestSimilarity >= 0.82){
-    return { matchType: 2, similarity: bestSimilarity };
-  }
-
-  return null;
+  return {
+    matchType,
+    similarity: avgScore,
+    exactMatches,
+    prefixMatches
+  };
 }
 
 function levenshtein(a,b){
@@ -767,8 +919,9 @@ function levenshtein(a,b){
 
 function localSearch(foods, term){
   const qn = normalizeForMatch(term);
-  const queryTokens = tokenizeWords(qn);
+  const queryTokens = tokenizeWords(qn, { removeStopwords:true });
   if(!qn) return [];
+  if(!queryTokens.length) return [];
 
   return foods
     .map((f)=>{
@@ -778,10 +931,16 @@ function localSearch(foods, term){
 
       let best = null;
       for(const candidate of candidates){
-        const candidateTokens = tokenizeWords(candidate);
+        const candidateTokens = tokenizeWords(candidate, { removeStopwords:true });
         const rank = rankQueryAgainstTokens(queryTokens, candidateTokens);
         if(!rank) continue;
-        if(!best || rank.matchType < best.matchType || (rank.matchType === best.matchType && rank.similarity > best.similarity)){
+        if(
+          !best ||
+          rank.matchType < best.matchType ||
+          (rank.matchType === best.matchType && rank.exactMatches > best.exactMatches) ||
+          (rank.matchType === best.matchType && rank.exactMatches === best.exactMatches && rank.prefixMatches > best.prefixMatches) ||
+          (rank.matchType === best.matchType && rank.exactMatches === best.exactMatches && rank.prefixMatches === best.prefixMatches && rank.similarity > best.similarity)
+        ){
           best = rank;
         }
       }
@@ -1240,6 +1399,7 @@ function renderPills(){
     <span class="pill">C ${r1(T.carbs)}g</span>
     <span class="pill">F ${r1(T.fat)}g</span>
     <span class="pill">Oggi: ${tk}</span>
+    <span class="pill">DB: ${escapeHtml(dbMetaInfo?.source || 'n/d')} • items ${r1(dbMetaInfo?.items || 0)} • bytes ${r1(dbMetaInfo?.bytes || 0)} • hash ${escapeHtml(dbMetaInfo?.hash || 'n/a')}</span>
     <span class="pill">${$('isWorkout').checked ? 'Allenamento 13:00' : 'Riposo'}</span>
     <span class="pill">Split: col ${Math.round(split.breakfast*100)}% • sp1 ${Math.round(split.snack1*100)}% • pran ${Math.round(split.lunch*100)}% • sp2 ${Math.round(split.snack2*100)}% • cena ${Math.round(split.dinner*100)}%</span>
   `;

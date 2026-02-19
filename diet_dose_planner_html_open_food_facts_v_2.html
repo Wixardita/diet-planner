@@ -170,7 +170,7 @@
 
     <div id="dbErrorBanner" class="card" style="display:none; margin-top:16px; border-color:rgba(255,120,120,.45); background:rgba(120,20,20,.35);">
       <div class="bd">
-        <b>Errore database locale:</b> impossibile caricare <code>foods_it.json</code> / <code>foods.json</code>.
+        <b>Errore database locale:</b> impossibile caricare <code>foods_it.js</code> / <code>foods_it.json</code> / <code>foods.json</code>.
         Verifica che il file esista e sia un JSON valido. La ricerca è disabilitata.
       </div>
     </div>
@@ -296,6 +296,7 @@
     </div>
   </div>
 
+<script src="./foods_it.js"></script>
 <script>
 /* ---------------------------
    Background animation (soft neon blobs)
@@ -514,8 +515,21 @@ function mapLocalFoods(raw){
 
 async function loadLocalFoods(){
   if(localFoodsCache) return localFoodsCache;
+
+  // Robust fallback for direct file:// usage: local script file is usually allowed
+  // even when fetch/XHR to JSON is blocked by browser security policies.
+  const scriptDb = Array.isArray(window.FOODS_IT_DB) ? window.FOODS_IT_DB : null;
+  if(scriptDb && scriptDb.length){
+    const mapped = mapLocalFoods(scriptDb);
+    if(mapped.length){
+      localFoodsCache = mapped;
+      setDbStatus(true);
+      return localFoodsCache;
+    }
+  }
+
   const fileCandidates = ['./foods_it.json', './foods.json'];
-  let lastErr = 'foods_it.json non disponibile';
+  let lastErr = 'foods_it.js / foods_it.json non disponibile';
 
   for(const file of fileCandidates){
     try{
@@ -531,7 +545,7 @@ async function loadLocalFoods(){
   }
 
   const protocolHint = location.protocol === 'file:'
-    ? ' Se stai aprendo il file direttamente dal disco, prova anche con un server locale (es. python -m http.server).'
+    ? ' Controlla che i file locali siano nella stessa cartella: foods_it.js (consigliato) oppure foods_it.json/foods.json.'
     : '';
   setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
   throw new Error(lastErr);

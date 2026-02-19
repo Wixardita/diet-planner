@@ -56,6 +56,21 @@
       color: rgba(245,250,255,.94);
       backdrop-filter: blur(14px) saturate(150%);
     }
+    .pill.warn{
+      background: linear-gradient(140deg, rgba(255,236,190,.34), rgba(255,201,133,.22));
+      border-color: rgba(255,226,176,.54);
+      color: rgba(255,246,224,.97);
+    }
+
+    .collapse-panel{
+      margin-top:12px;
+      padding:14px;
+      border-radius:20px;
+      border:1px solid rgba(238,247,255,.34);
+      background: linear-gradient(145deg, rgba(244,252,255,.24), rgba(188,215,246,.15));
+      backdrop-filter: blur(16px) saturate(145%);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+    }
 
     .btn{
       border:1px solid var(--stroke);
@@ -182,16 +197,81 @@
         <div class="pills" id="pills"></div>
       </div>
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <div class="toggle" title="Allenamento alle 13:00: aumenta carburante su spuntino mattina + pranzo">
-          <input type="checkbox" id="isWorkout" />
-          <label for="isWorkout" style="margin:0; color:rgba(255,255,255,.85); font-size:12px;">Giorno di allenamento (13:00)</label>
-        </div>
-        <button class="btn" id="btnSettings">Impostazioni</button>
+        <button class="btn" id="btnProfileToggle">Scheda fisica ▾</button>
         <button class="btn" id="btnReset">Reset oggi</button>
       </div>
     </header>
 
-
+    <div id="profilePanel" class="collapse-panel" style="display:none;">
+      <div class="row">
+        <div>
+          <label>Peso (kg)</label>
+          <input id="profileWeight" type="number" min="0" step="0.1" />
+        </div>
+        <div>
+          <label>Altezza (cm)</label>
+          <input id="profileHeight" type="number" min="0" step="1" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Età</label>
+          <input id="profileAge" type="number" min="0" step="1" />
+        </div>
+        <div>
+          <label>Obiettivo</label>
+          <select id="profileGoal">
+            <option value="Mantenimento">Mantenimento</option>
+            <option value="Aumento massa">Aumento massa</option>
+            <option value="Dimagrimento">Dimagrimento</option>
+          </select>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Allenamenti a settimana</label>
+          <input id="profileWorkouts" type="number" min="0" step="1" />
+        </div>
+        <div>
+          <label>Ora allenamento</label>
+          <input id="profileWorkoutTime" type="time" value="13:00" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Giorno di allenamento</label>
+          <div class="toggle" title="Allenamento alle 13:00: aumenta carburante su spuntino mattina + pranzo">
+            <input type="checkbox" id="isWorkout" />
+            <label for="isWorkout" style="margin:0; color:rgba(255,255,255,.85); font-size:12px;">Giorno di allenamento (13:00)</label>
+          </div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Proteine target (g/die)</label>
+          <input id="profileProtein" type="number" min="0" step="0.1" />
+        </div>
+        <div>
+          <label>Carbo target (g/die)</label>
+          <input id="profileCarbs" type="number" min="0" step="0.1" />
+        </div>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Grassi target (g/die)</label>
+          <input id="profileFat" type="number" min="0" step="0.1" />
+        </div>
+        <div>
+          <label>Calorie target (kcal/die)</label>
+          <input id="profileKcal" type="number" min="0" step="1" />
+        </div>
+      </div>
+      <div style="display:flex; gap:10px; margin-top:12px;">
+        <button class="btn primary" id="btnProfileSave">Salva</button>
+        <button class="btn" id="btnProfileClose">Annulla/Chiudi</button>
+      </div>
+      <div class="muted" id="profileError" style="margin-top:8px; color:#ffd6d6;"></div>
+    </div>
 
     <div id="dbErrorBanner" class="card" style="display:none; margin-top:16px; border-color:rgba(255,120,120,.45); background:rgba(120,20,20,.35);">
       <div class="bd">
@@ -397,19 +477,15 @@ const clamp = (v,min,max)=>Math.max(min,Math.min(max,v));
 const r1 = (n)=>Math.round(n);
 const r01 = (n)=>Math.round(n*10)/10;
 
-const DEFAULT_TARGETS = { kcal: 2900, protein: 125, carbs: 380, fat: 90 };
-
-// Workout bump (training day). Adds ~250 kcal total.
-// +50g carbs (200 kcal) +5g protein (20 kcal) +3g fat (27 kcal) ~= 247 kcal.
-const WORKOUT_BUMP = { kcal: 250, protein: 5, carbs: 50, fat: 3 };
-
 // Base split (rest day)
 const SPLIT_REST = { breakfast: .22, snack1: .10, lunch: .28, snack2: .10, dinner: .30 };
 // Workout day @13:00: more fuel pre+post (snack1 + lunch), slightly less at dinner
 const SPLIT_WORKOUT_13 = { breakfast: .20, snack1: .13, lunch: .32, snack2: .10, dinner: .25 };
 
-let targets = load('targets', DEFAULT_TARGETS);
 let isWorkout = load('isWorkout', false);
+let profile = loadProfile();
+if(typeof profile?.isWorkoutDay === 'boolean') isWorkout = !!profile.isWorkoutDay;
+let profileDraft = { ...profile };
 $('isWorkout').checked = !!isWorkout;
 
 let meal = []; // selected foods for current meal: {name, per100:{kcal,protein,carbs,fat,fiber}, score, source, hint}
@@ -425,6 +501,18 @@ function load(key, fallback){
   catch(e){ return fallback; }
 }
 function save(key, value){ localStorage.setItem(LS(key), JSON.stringify(value)); }
+
+function loadProfile(){
+  try{
+    const raw = localStorage.getItem('profile_v1');
+    return raw ? JSON.parse(raw) : {};
+  }catch(e){
+    return {};
+  }
+}
+function saveProfile(value){
+  localStorage.setItem('profile_v1', JSON.stringify(value || {}));
+}
 
 function sumMacros(items){
   return items.reduce((a,it)=>{
@@ -786,16 +874,19 @@ function splitForDay(){
   return $('isWorkout').checked ? SPLIT_WORKOUT_13 : SPLIT_REST;
 }
 
-function effectiveTargets(){
-  const weightKgRaw = Number(load('weightKg', 70));
-  const weightKg = isFinite(weightKgRaw) && weightKgRaw > 0 ? weightKgRaw : 70;
-  const proteinPerKg = $('isWorkout').checked ? 1.9 : 1.5;
-  const protein = weightKg * proteinPerKg;
-  const fat = weightKg * 0.8;
-  const kcal = $('isWorkout').checked ? (targets.kcal + WORKOUT_BUMP.kcal) : targets.kcal;
-  const carbs = Math.max(0, (kcal - (protein*4 + fat*9)) / 4);
+function profileHasRequiredTargets(p = profile){
+  const required = ['kcal','protein','carbs','fat'];
+  return required.every((k)=>Number.isFinite(Number(p?.[k])) && Number(p[k]) >= 0);
+}
 
-  return { kcal, protein, carbs, fat };
+function effectiveTargets(){
+  const p = profile || {};
+  return {
+    kcal: Math.max(0, Number(p.kcal) || 0),
+    protein: Math.max(0, Number(p.protein) || 0),
+    carbs: Math.max(0, Number(p.carbs) || 0),
+    fat: Math.max(0, Number(p.fat) || 0)
+  };
 }
 
 function mealMacroDeficitMessage(totals, target){
@@ -1031,11 +1122,13 @@ function renderPills(){
   const tk = todayKey();
   const split = splitForDay();
   const T = effectiveTargets();
+  const warningPill = profileHasRequiredTargets() ? '' : '<span class="pill warn">Completa la Scheda fisica per calcoli precisi</span>';
   $('pills').innerHTML = `
-    <span class="pill">Target: ${T.kcal} kcal${$('isWorkout').checked ? ' (+WO)' : ''}</span>
-    <span class="pill">P ${T.protein}g</span>
-    <span class="pill">C ${T.carbs}g</span>
-    <span class="pill">F ${T.fat}g</span>
+    ${warningPill}
+    <span class="pill">Target: ${r1(T.kcal)} kcal</span>
+    <span class="pill">P ${r1(T.protein)}g</span>
+    <span class="pill">C ${r1(T.carbs)}g</span>
+    <span class="pill">F ${r1(T.fat)}g</span>
     <span class="pill">Oggi: ${tk}</span>
     <span class="pill">${$('isWorkout').checked ? 'Allenamento 13:00' : 'Riposo'}</span>
     <span class="pill">Split: col ${Math.round(split.breakfast*100)}% • sp1 ${Math.round(split.snack1*100)}% • pran ${Math.round(split.lunch*100)}% • sp2 ${Math.round(split.snack2*100)}% • cena ${Math.round(split.dinner*100)}%</span>
@@ -1236,21 +1329,114 @@ $('btnClearMeal').addEventListener('click', ()=>{
 
 $('mealType').addEventListener('change', ()=>{ renderMeal(); });
 
+function setProfileFormValues(data){
+  $('profileWeight').value = data.weightKg ?? '';
+  $('profileHeight').value = data.heightCm ?? '';
+  $('profileAge').value = data.age ?? '';
+  $('profileGoal').value = data.goal || 'Mantenimento';
+  $('profileWorkouts').value = data.workoutsPerWeek ?? '';
+  $('profileWorkoutTime').value = data.workoutTime || '13:00';
+  $('profileProtein').value = data.protein ?? '';
+  $('profileCarbs').value = data.carbs ?? '';
+  $('profileFat').value = data.fat ?? '';
+  $('profileKcal').value = data.kcal ?? '';
+}
+
+function readProfileFormValues(){
+  const num = (id)=>{
+    const raw = String($(id).value || '').trim();
+    return raw === '' ? NaN : Number(raw);
+  };
+  return {
+    weightKg: num('profileWeight'),
+    heightCm: num('profileHeight'),
+    age: num('profileAge'),
+    goal: $('profileGoal').value,
+    workoutsPerWeek: num('profileWorkouts'),
+    workoutTime: $('profileWorkoutTime').value || '13:00',
+    protein: num('profileProtein'),
+    carbs: num('profileCarbs'),
+    fat: num('profileFat'),
+    kcal: num('profileKcal'),
+    isWorkoutDay: !!$('isWorkout').checked
+  };
+}
+
+function normalizeProfilePayload(raw){
+  const out = {};
+  const numericFields = ['weightKg','heightCm','age','workoutsPerWeek','protein','carbs','fat','kcal'];
+  for(const k of numericFields){
+    const v = Number(raw[k]);
+    if(Number.isFinite(v)) out[k] = v;
+  }
+  out.goal = raw.goal || 'Mantenimento';
+  out.workoutTime = raw.workoutTime || '13:00';
+  out.isWorkoutDay = !!raw.isWorkoutDay;
+  return out;
+}
+
+function validateProfile(raw){
+  const numericFields = ['weightKg','heightCm','age','workoutsPerWeek','protein','carbs','fat','kcal'];
+  for(const key of numericFields){
+    const v = raw[key];
+    if(Number.isFinite(v) && v < 0){
+      return `${key} non può essere negativo`;
+    }
+  }
+  const required = ['kcal','protein','carbs','fat'];
+  for(const key of required){
+    if(!Number.isFinite(raw[key])) return 'Compila i target richiesti: kcal + P + C + F';
+  }
+  return '';
+}
+
+function openProfilePanel(){
+  profileDraft = { ...profile };
+  setProfileFormValues(profileDraft);
+  $('profileError').textContent = '';
+  $('profilePanel').style.display = 'block';
+}
+
+function closeProfilePanel(resetDraft=false){
+  if(resetDraft){
+    profileDraft = { ...profile };
+    setProfileFormValues(profileDraft);
+  }
+  $('profileError').textContent = '';
+  $('profilePanel').style.display = 'none';
+}
+
 $('isWorkout').addEventListener('change', ()=>{
   isWorkout = $('isWorkout').checked;
   save('isWorkout', isWorkout);
+  profileDraft.isWorkoutDay = isWorkout;
   renderAll();
 });
 
-$('btnSettings').addEventListener('click', ()=>{
-  const msg =
-`Impostazioni rapide (target giornalieri):\n\nAttuali:\n- kcal: ${targets.kcal}\n- Proteine: ${targets.protein}g\n- Carbo: ${targets.carbs}g\n- Grassi: ${targets.fat}g\n\nInserisci 4 numeri separati da virgola: kcal,proteine,carbo,grassi\nEsempio: 3000,130,400,95`;
-  const ans = prompt(msg);
-  if(!ans) return;
-  const parts = ans.split(',').map(x=>Number(x.trim()));
-  if(parts.length!==4 || parts.some(x=>!isFinite(x) || x<=0)) return alert('Formato non valido.');
-  targets = {kcal: parts[0], protein: parts[1], carbs: parts[2], fat: parts[3]};
-  save('targets', targets);
+$('btnProfileToggle').addEventListener('click', ()=>{
+  const open = $('profilePanel').style.display !== 'none';
+  if(open) closeProfilePanel(true);
+  else openProfilePanel();
+});
+
+$('btnProfileClose').addEventListener('click', ()=>{
+  closeProfilePanel(true);
+});
+
+$('btnProfileSave').addEventListener('click', ()=>{
+  const raw = readProfileFormValues();
+  const validationError = validateProfile(raw);
+  if(validationError){
+    $('profileError').textContent = validationError;
+    return;
+  }
+  profile = normalizeProfilePayload(raw);
+  profileDraft = { ...profile };
+  isWorkout = !!profile.isWorkoutDay;
+  $('isWorkout').checked = isWorkout;
+  save('isWorkout', isWorkout);
+  saveProfile(profile);
+  closeProfilePanel(false);
   renderAll();
 });
 
@@ -1405,6 +1591,7 @@ $('btnLog').addEventListener('click', ()=>{
   renderAll();
 });
 
+setProfileFormValues(profileDraft);
 loadLocalFoods().catch(()=>{}).finally(()=>renderAll());
 </script>
 </body>

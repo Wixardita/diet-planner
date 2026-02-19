@@ -433,13 +433,6 @@ function guessScore(name, fiberPer100){
    Open Food Facts lookup (ingredient-first)
 ---------------------------- */
 async function offSearch(q){
-  const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(q)}&search_simple=1&action=process&json=1&page_size=24`;
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('OFF search failed');
-  const data = await res.json();
-  const products = (data.products||[]).slice(0,24);
-
-  // Prefer basic food groups when available
   const ALLOWED_PNNS2 = new Set([
     'Fruits and vegetables',
     'Cereals and potatoes',
@@ -450,31 +443,73 @@ async function offSearch(q){
     'Fats',
     'Beverages'
   ]);
+  const RECIPE_WORDS = /\b(ricetta|recipe|recette|piatto|dish|menu|meal|ready\s*meal|prepared\s*meal|insalata|salad|zuppa|soup|pasta|risotto|lasagna|burger|sandwich|bowl|mix)\b/i;
+  const CONNECTORS = /\b(with|con|and|e|a\sla|alla|al|ai|agli|alle|con\s|w\/|style)\b/i;
+  const FALLBACK_FOODS = ['chicken','rice','zucchini','egg','yogurt','banana','avocado'];
 
-  const isRecipeish = (name) => /\b(ricetta|recipe|recette|piatto|dish|menu|meal|ready\s*meal|prepared\s*meal|insalata|salad|zuppa|soup)\b/i.test(name);
+  const terms = q.split(',').map(x=>x.trim()).filter(Boolean);
+  const queries = terms.length ? terms : [q.trim()];
 
-  const picked = products
-    .map(p=>({p, name: (p.product_name || p.generic_name || p.brands || q || '').trim()}))
+  const getName = (p, term) => (p.product_name || p.generic_name || p.brands || term || '').trim();
+  const hasNutrition = (n) => [
+    n['energy-kcal_100g'], n['energy_kcal_100g'], n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g']
+  ].some(v => v != null && isFinite(Number(v)) && Number(v) > 0);
+
+  const ingredientRank = (name) => {
+    const cleaned = String(name || '').trim();
+    const words = cleaned.split(/\s+/).filter(Boolean).length || 1;
+    let rank = 0;
+    rank += cleaned.length / 200;
+    rank += (words-1) * 0.8;
+    if(RECIPE_WORDS.test(cleaned)) rank += 8;
+    if(CONNECTORS.test(cleaned)) rank += 3;
+    return rank;
+  };
+
+  async function fetchProducts(term){
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&search_simple=1&action=process&json=1&page_size=24`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('OFF search failed');
+    const data = await res.json();
+    return (data.products || []).slice(0,24).map(p=>({ p, name: getName(p, term) }));
+  }
+
+  const all = (await Promise.all(queries.map(fetchProducts))).flat();
+
+  const valid = all
     .filter(({p,name})=>{
       if(!name) return false;
-      if(isRecipeish(name)) return false;
-
-      // prefer nutrition per 100g (ingredients are usually per 100g)
-      if(p.nutrition_data_per && String(p.nutrition_data_per).toLowerCase() !== '100g') return false;
-
-      // if group exists, keep only “basic” groups
-      if(p.pnns_groups_2 && !ALLOWED_PNNS2.has(p.pnns_groups_2)) return false;
-
-      // must have at least some nutrition
+      if(RECIPE_WORDS.test(name)) return false;
       const n = p.nutriments || {};
-      const hasMacros =
-        (n['energy-kcal_100g'] ?? n['energy_kcal_100g'] ?? n['proteins_100g'] ?? n['carbohydrates_100g'] ?? n['fat_100g']) != null;
-      return hasMacros;
+      if(!hasNutrition(n)) return false;
+      if(p.nutrition_data_per && String(p.nutrition_data_per).toLowerCase() !== '100g') return false;
+      if(p.pnns_groups_2 && !ALLOWED_PNNS2.has(p.pnns_groups_2)) return false;
+      return true;
     })
-    .slice(0,8);
+    .sort((a,b)=> ingredientRank(a.name) - ingredientRank(b.name));
 
-  const fallback = products.slice(0,8).map(p=>({p, name:(p.product_name || p.generic_name || p.brands || q || '').trim()}));
-  const list = picked.length ? picked : fallback;
+  const deduped = [];
+  const seen = new Set();
+  for(const item of valid){
+    const key = item.name.toLowerCase();
+    if(seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(item);
+    if(deduped.length >= 8) break;
+  }
+
+  let list = deduped;
+  if(!list.length){
+    const fb = (await Promise.all(FALLBACK_FOODS.map(fetchProducts))).flat();
+    list = fb
+      .filter(({p,name})=>{
+        if(!name || RECIPE_WORDS.test(name)) return false;
+        const n = p.nutriments || {};
+        return hasNutrition(n);
+      })
+      .sort((a,b)=> ingredientRank(a.name) - ingredientRank(b.name))
+      .slice(0,8);
+  }
 
   return list.map(({p,name})=>{
     const n = p.nutriments || {};
@@ -485,10 +520,8 @@ async function offSearch(q){
       fat: Number(n['fat_100g'] ?? 0),
       fiber: Number(n['fiber_100g'] ?? 0),
     };
-
     const hint = p.pnns_groups_2 ? `(${p.pnns_groups_2})` : (p.brands ? `(${p.brands})` : (p.quantity ? `(${p.quantity})` : ''));
     const score = guessScore(name, per100.fiber);
-
     return { name, per100, score, source:'OpenFoodFacts', hint };
   });
 }

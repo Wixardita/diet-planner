@@ -7,11 +7,11 @@
   <style>
     :root{
       --bg:#050507;
-      --card: rgba(255,255,255,.08);
-      --stroke: rgba(255,255,255,.12);
+      --card: rgba(255,255,255,.16);
+      --stroke: rgba(255,255,255,.18);
       --text: rgba(255,255,255,.92);
-      --muted: rgba(255,255,255,.62);
-      --muted2: rgba(255,255,255,.45);
+      --muted: rgba(255,255,255,.68);
+      --muted2: rgba(255,255,255,.50);
       --shadow: 0 20px 80px rgba(0,0,0,.55);
       --radius: 22px;
       --radius2: 28px;
@@ -74,7 +74,7 @@
       border:1px solid var(--stroke);
       border-radius: var(--radius2);
       box-shadow: var(--shadow);
-      backdrop-filter: blur(16px);
+      backdrop-filter: blur(18px) brightness(1.08);
       overflow:hidden;
     }
     .card .hd{
@@ -196,7 +196,7 @@
                 <button class="btn" id="btnClearMeal">Svuota selezione pasto</button>
               </div>
               <div class="muted" style="margin-top:8px">
-                Fonte dati: <b>Open Food Facts</b> (ottimo per prodotti, variabile per alimenti generici). Se una voce è incompleta, scegli un altro risultato.
+                Fonte dati: <b>USDA FoodData Central</b> con fallback Open Food Facts. Se una voce è incompleta, scegli un altro risultato.
               </div>
             </div>
 
@@ -280,7 +280,7 @@
           </div>
 
           <footer>
-            Dati nutrizionali: Open Food Facts API. (world.openfoodfacts.org)
+            Dati nutrizionali: USDA FoodData Central (primario) + Open Food Facts (fallback).
           </footer>
         </div>
       </div>
@@ -430,9 +430,17 @@ function guessScore(name, fiberPer100){
 }
 
 /* ---------------------------
-   Open Food Facts lookup (ingredient-first)
+   Hybrid lookup (USDA primary + OFF fallback)
 ---------------------------- */
 async function offSearch(q){
+  /* New block: constants for USDA + quality ranking rules. */
+  const USDA_API_KEY = '9fSL6bV6V8az5qW2TjtMntbUkh6baYFiYcjr3Ftg';
+  const USDA_TYPES_PRIORITY = { 'Foundation': 0, 'SR Legacy': 1, 'Branded': 2, 'Survey (FNDDS)': 3, 'Survey': 3 };
+  const RECIPE_INDICATORS = ['with','and','style','flavor','prepared','recipe','meal','dish'];
+  const RECIPE_INDICATOR_RE = new RegExp(`\\b(${RECIPE_INDICATORS.join('|')})\\b`, 'i');
+  const CURATED_FALLBACK = ['chicken','rice','egg','banana','yogurt','avocado','salmon','potato'];
+
+  /* Existing OFF filter settings retained for fallback usage. */
   const ALLOWED_PNNS2 = new Set([
     'Fruits and vegetables',
     'Cereals and potatoes',
@@ -443,9 +451,8 @@ async function offSearch(q){
     'Fats',
     'Beverages'
   ]);
-  const RECIPE_WORDS = /\b(ricetta|recipe|recette|piatto|dish|menu|meal|ready\s*meal|prepared\s*meal|insalata|salad|zuppa|soup|pasta|risotto|lasagna|burger|sandwich|bowl|mix)\b/i;
+  const RECIPE_WORDS = /\b(ricetta|recipe|recette|piatto|dish|menu|meal|ready\s*meal|prepared\s*meal|insalata|salad|zuppa|soup|pasta|risotto|lasagna|burger|sandwich|bowl|mix|with|and|style|flavor)\b/i;
   const CONNECTORS = /\b(with|con|and|e|a\sla|alla|al|ai|agli|alle|con\s|w\/|style)\b/i;
-  const FALLBACK_FOODS = ['chicken','rice','zucchini','egg','yogurt','banana','avocado'];
 
   const terms = q.split(',').map(x=>x.trim()).filter(Boolean);
   const queries = terms.length ? terms : [q.trim()];
@@ -466,6 +473,7 @@ async function offSearch(q){
     return rank;
   };
 
+  /* Existing OFF request helper kept as fallback path. */
   async function fetchProducts(term){
     const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&search_simple=1&action=process&json=1&page_size=24`;
     const res = await fetch(url);
@@ -474,23 +482,106 @@ async function offSearch(q){
     return (data.products || []).slice(0,24).map(p=>({ p, name: getName(p, term) }));
   }
 
-  const all = (await Promise.all(queries.map(fetchProducts))).flat();
+  /* New block: map USDA nutrient labels into current app macro schema. */
+  function nutrientByName(nutrients, wanted){
+    const found = (nutrients || []).find(n => wanted.includes(String(n.nutrientName || '').trim()));
+    return Number(found?.value || 0) || 0;
+  }
 
-  const valid = all
-    .filter(({p,name})=>{
-      if(!name) return false;
-      if(RECIPE_WORDS.test(name)) return false;
-      const n = p.nutriments || {};
-      if(!hasNutrition(n)) return false;
-      if(p.nutrition_data_per && String(p.nutrition_data_per).toLowerCase() !== '100g') return false;
-      if(p.pnns_groups_2 && !ALLOWED_PNNS2.has(p.pnns_groups_2)) return false;
-      return true;
-    })
-    .sort((a,b)=> ingredientRank(a.name) - ingredientRank(b.name));
+  /* New block: normalize USDA rows to app result format. */
+  function mapUsdaFood(food){
+    const name = String(food.description || '').trim();
+    const per100 = {
+      kcal: nutrientByName(food.foodNutrients, ['Energy']),
+      protein: nutrientByName(food.foodNutrients, ['Protein']),
+      carbs: nutrientByName(food.foodNutrients, ['Carbohydrate, by difference']),
+      fat: nutrientByName(food.foodNutrients, ['Total lipid (fat)']),
+      fiber: nutrientByName(food.foodNutrients, ['Fiber, total dietary'])
+    };
+    const hasCore = per100.kcal > 0 && (per100.protein > 0 || per100.carbs > 0 || per100.fat > 0);
+    if(!name || !hasCore || RECIPE_INDICATOR_RE.test(name)) return null;
+    const macroCompleteness = (per100.kcal>0) + (per100.protein>0) + (per100.carbs>0) + (per100.fat>0) + (per100.fiber>=0);
+    const dataTypePriority = USDA_TYPES_PRIORITY[food.dataType] ?? 99;
+    return {
+      name,
+      per100,
+      score: guessScore(name, per100.fiber),
+      source: 'USDA',
+      hint: food.dataType ? `(${food.dataType})` : '',
+      __rank: { macroCompleteness, dataTypePriority, nameLen: name.length }
+    };
+  }
 
+  /* New block: search USDA as primary source per single term. */
+  async function searchUsdaTerm(term){
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(term)}&pageSize=8&api_key=${USDA_API_KEY}`;
+    const res = await fetch(url);
+    if(!res.ok) throw new Error('USDA search failed');
+    const data = await res.json();
+    return (data.foods || [])
+      .map(mapUsdaFood)
+      .filter(Boolean)
+      .sort((a,b)=>
+        b.__rank.macroCompleteness - a.__rank.macroCompleteness ||
+        a.__rank.dataTypePriority - b.__rank.dataTypePriority ||
+        a.__rank.nameLen - b.__rank.nameLen
+      );
+  }
+
+  /* New block: OFF fallback for one term when USDA has zero usable rows. */
+  async function searchOffTerm(term){
+    const all = await fetchProducts(term);
+    return all
+      .filter(({p,name})=>{
+        if(!name) return false;
+        if(RECIPE_WORDS.test(name) || RECIPE_INDICATOR_RE.test(name)) return false;
+        const n = p.nutriments || {};
+        if(!hasNutrition(n)) return false;
+        if(p.nutrition_data_per && String(p.nutrition_data_per).toLowerCase() !== '100g') return false;
+        if(p.pnns_groups_2 && !ALLOWED_PNNS2.has(p.pnns_groups_2)) return false;
+        return true;
+      })
+      .sort((a,b)=> ingredientRank(a.name) - ingredientRank(b.name))
+      .slice(0,8)
+      .map(({p,name})=>{
+        const n = p.nutriments || {};
+        const per100 = {
+          kcal: Number(n['energy-kcal_100g'] ?? n['energy_kcal_100g'] ?? 0),
+          protein: Number(n['proteins_100g'] ?? 0),
+          carbs: Number(n['carbohydrates_100g'] ?? 0),
+          fat: Number(n['fat_100g'] ?? 0),
+          fiber: Number(n['fiber_100g'] ?? 0),
+        };
+        const hint = p.pnns_groups_2 ? `(${p.pnns_groups_2})` : (p.brands ? `(${p.brands})` : (p.quantity ? `(${p.quantity})` : ''));
+        const score = guessScore(name, per100.fiber);
+        return { name, per100, score, source:'OpenFoodFacts', hint, __rank: { macroCompleteness: 0, dataTypePriority: 99, nameLen: name.length } };
+      });
+  }
+
+  /* New block: hybrid term pipeline + curated fallback if a term yields nothing twice. */
+  const merged = [];
+  for(const term of queries){
+    let termResults = await searchUsdaTerm(term);
+    if(!termResults.length) termResults = await searchOffTerm(term);
+    if(!termResults.length){
+      for(const fbTerm of CURATED_FALLBACK){
+        const fbUsda = await searchUsdaTerm(fbTerm);
+        if(fbUsda.length){ termResults = fbUsda; break; }
+        const fbOff = await searchOffTerm(fbTerm);
+        if(fbOff.length){ termResults = fbOff; break; }
+      }
+    }
+    merged.push(...termResults);
+  }
+
+  /* New block: global de-duplication + ranking preference by macros/type/shortness. */
   const deduped = [];
   const seen = new Set();
-  for(const item of valid){
+  for(const item of merged.sort((a,b)=>
+    b.__rank.macroCompleteness - a.__rank.macroCompleteness ||
+    a.__rank.dataTypePriority - b.__rank.dataTypePriority ||
+    a.__rank.nameLen - b.__rank.nameLen
+  )){
     const key = item.name.toLowerCase();
     if(seen.has(key)) continue;
     seen.add(key);
@@ -498,20 +589,8 @@ async function offSearch(q){
     if(deduped.length >= 8) break;
   }
 
-  let list = deduped;
-  if(!list.length){
-    const fb = (await Promise.all(FALLBACK_FOODS.map(fetchProducts))).flat();
-    list = fb
-      .filter(({p,name})=>{
-        if(!name || RECIPE_WORDS.test(name)) return false;
-        const n = p.nutriments || {};
-        return hasNutrition(n);
-      })
-      .sort((a,b)=> ingredientRank(a.name) - ingredientRank(b.name))
-      .slice(0,8);
-  }
-
-  return list.map(({p,name})=>{
+  return deduped.map(({__rank, ...it})=>it).map(({p,name,...rest})=>{
+    if(!p) return { name, ...rest };
     const n = p.nutriments || {};
     const per100 = {
       kcal: Number(n['energy-kcal_100g'] ?? n['energy_kcal_100g'] ?? 0),

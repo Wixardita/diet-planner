@@ -855,6 +855,52 @@ function customFormHtml(term, key){
   `;
 }
 
+function isSingleWordQuery(term){
+  return tokenizeWords(term).length === 1;
+}
+
+function startsWithQueryWord(foodName, queryWord){
+  const normalizedName = normalizeForMatch(foodName);
+  const normalizedWord = normalizeForMatch(queryWord);
+  if(!normalizedName || !normalizedWord) return false;
+  return normalizedName === normalizedWord || normalizedName.startsWith(`${normalizedWord} `);
+}
+
+function resultCardHtml(r, idx){
+  return `
+    <div class="item">
+      <div>
+        <b>${escapeHtml(r.name)} <span class="meta">${escapeHtml(r.hint||'')}</span></b>
+        <div class="meta">Fonte: ${r.source} • per 100g: ${r1(r.per100.kcal)} kcal · P ${r01(r.per100.protein)} · C ${r01(r.per100.carbs)} · F ${r01(r.per100.fat)} · Fib ${r01(r.per100.fiber)}</div>
+        <div class="meta">Score suggerito: <b>${r01(r.score)}/10</b></div>
+      </div>
+      <div class="right">
+        <button class="btn primary" onclick="addResult(${idx})">Aggiungi</button>
+      </div>
+    </div>
+  `;
+}
+
+function groupedPrefixCardHtml(term, matches, flat){
+  if(!matches.length) return '';
+  const detailCards = matches.map((r)=>{
+    const idx = flat.push(r) - 1;
+    return resultCardHtml(r, idx);
+  }).join('');
+
+  return `
+    <details class="item" style="display:block;">
+      <summary style="cursor:pointer; list-style:none;">
+        <b>${escapeHtml(term)}</b>
+        <span class="meta">${matches.length} risultati che iniziano con “${escapeHtml(term)}”</span>
+      </summary>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:10px;">
+        ${detailCards}
+      </div>
+    </details>
+  `;
+}
+
 async function searchFoodsByTerm(q){
   const foods = await loadLocalFoods();
   const terms = q.split(',').map(x=>x.trim()).filter(Boolean);
@@ -1533,22 +1579,22 @@ async function searchAndRender(){
   const sections = [];
   const flat = [];
   const foods = await loadLocalFoods();
-  for(const group of grouped){
-    const cards = group.results.map((r)=>{
-      const idx = flat.push(r) - 1;
-      return `
-        <div class="item">
-          <div>
-            <b>${escapeHtml(r.name)} <span class="meta">${escapeHtml(r.hint||'')}</span></b>
-            <div class="meta">Fonte: ${r.source} • per 100g: ${r1(r.per100.kcal)} kcal · P ${r01(r.per100.protein)} · C ${r01(r.per100.carbs)} · F ${r01(r.per100.fat)} · Fib ${r01(r.per100.fiber)}</div>
-            <div class="meta">Score suggerito: <b>${r01(r.score)}/10</b></div>
-          </div>
-          <div class="right">
-            <button class="btn primary" onclick="addResult(${idx})">Aggiungi</button>
-          </div>
-        </div>
-      `;
-    }).join('');
+  for(const [groupIndex, group] of grouped.entries()){
+    let cards = '';
+    if(isSingleWordQuery(group.term)){
+      const prefixMatches = group.results.filter((r)=>startsWithQueryWord(r.name, group.term));
+      const otherMatches = group.results.filter((r)=>!startsWithQueryWord(r.name, group.term));
+      cards += groupedPrefixCardHtml(group.term, prefixMatches, flat);
+      cards += otherMatches.map((r)=>{
+        const idx = flat.push(r) - 1;
+        return resultCardHtml(r, idx);
+      }).join('');
+    }else{
+      cards = group.results.map((r)=>{
+        const idx = flat.push(r) - 1;
+        return resultCardHtml(r, idx);
+      }).join('');
+    }
 
     const suggestions = (!group.results.length) ? getSuggestions(foods, group.term, 3) : [];
     const suggestionHtml = suggestions.length
@@ -1558,7 +1604,7 @@ async function searchAndRender(){
     sections.push(`
       <div style="margin-top:10px;">
         <div class="kicker" style="margin-bottom:8px;">Termine: <b>${escapeHtml(group.term)}</b></div>
-        ${cards || `${suggestionHtml}${customFormHtml(group.term, `g${sections.length}`)}`}
+        ${cards || `${suggestionHtml}${customFormHtml(group.term, `g${groupIndex}`)}`}
       </div>
     `);
   }

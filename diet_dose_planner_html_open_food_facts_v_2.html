@@ -276,7 +276,7 @@
 
     <div id="dbErrorBanner" class="card" style="display:none; margin-top:16px; border-color:rgba(255,120,120,.45); background:rgba(120,20,20,.35);">
       <div class="bd">
-        <b>Errore database locale:</b> impossibile caricare <code>foods_it.js</code> / <code>foods_it.json</code> / <code>foods.json</code>.
+        <b>Errore database locale:</b> impossibile caricare <code>data/foods_it_master.json</code>.
         Verifica che il file esista e sia un JSON valido. La ricerca è disabilitata.
       </div>
     </div>
@@ -406,7 +406,6 @@
     </div>
   </div>
 
-<script src="./foods_it.js"></script>
 <script>
 /* ---------------------------
    Background animation (soft neon blobs)
@@ -622,13 +621,13 @@ function mapLocalFoods(raw){
     name: String(f.name || '').trim(),
     aliases: Array.isArray(f.aliases) ? f.aliases.map((a)=>String(a || '').trim()).filter(Boolean) : [],
     per100: {
-      kcal: Number(f.kcal_per100 || 0),
-      protein: Number(f.protein_per100 || 0),
-      carbs: Number(f.carbs_per100 || 0),
-      fat: Number(f.fat_per100 || 0),
-      fiber: Number(f.fiber_per100 || 0),
+      kcal: Number(f.kcal || 0),
+      protein: Number(f.protein || 0),
+      carbs: Number(f.carbs || 0),
+      fat: Number(f.fat || 0),
+      fiber: Number(f.fiber || 0),
     },
-    category: String(f.category || 'other'),
+    category: String(f.category || 'altro'),
     source: 'Database locale (Italia)',
     hint: f.category ? `(${f.category})` : ''
   })).filter((x)=>x.name);
@@ -636,42 +635,21 @@ function mapLocalFoods(raw){
 
 async function loadLocalFoods(){
   if(localFoodsCache) return localFoodsCache;
-
-  // Robust fallback for direct file:// usage: local script file is usually allowed
-  // even when fetch/XHR to JSON is blocked by browser security policies.
-  const scriptDb = Array.isArray(window.FOODS_IT_DB) ? window.FOODS_IT_DB : null;
-  if(scriptDb && scriptDb.length){
-    const mapped = mapLocalFoods(scriptDb);
-    if(mapped.length){
-      baseFoodsCache = mapped;
-      localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
-      setDbStatus(true);
-      return localFoodsCache;
-    }
+  const dbFile = './data/foods_it_master.json';
+  try{
+    const raw = await readLocalJson(dbFile);
+    const mapped = mapLocalFoods(raw);
+    if(!mapped.length) throw new Error(`${dbFile} vuoto o non valido`);
+    baseFoodsCache = mapped;
+    localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
+    setDbStatus(true);
+    return localFoodsCache;
+  }catch(e){
+    const lastErr = e?.message || String(e);
+    const protocolHint = location.protocol === 'file:' ? ' Avvia la pagina con un server locale per permettere il caricamento JSON.' : '';
+    setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
+    throw new Error(lastErr);
   }
-
-  const fileCandidates = ['./foods_it.json', './foods.json'];
-  let lastErr = 'foods_it.js / foods_it.json non disponibile';
-
-  for(const file of fileCandidates){
-    try{
-      const raw = await readLocalJson(file);
-      const mapped = mapLocalFoods(raw);
-      if(!mapped.length) throw new Error(`${file} vuoto o non valido`);
-      baseFoodsCache = mapped;
-      localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
-      setDbStatus(true);
-      return localFoodsCache;
-    }catch(e){
-      lastErr = e?.message || String(e);
-    }
-  }
-
-  const protocolHint = location.protocol === 'file:'
-    ? ' Controlla che i file locali siano nella stessa cartella: foods_it.js (consigliato) oppure foods_it.json/foods.json.'
-    : '';
-  setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
-  throw new Error(lastErr);
 }
 
 function singularizeWord(word){
@@ -778,23 +756,28 @@ function levenshtein(a,b){
 }
 
 function localSearch(foods, term){
-  const queryTokens = tokenizeWords(term).map((w)=>singularizeWord(w));
-  if(!queryTokens.length) return [];
+  const qn = normalizeForMatch(term);
+  if(!qn) return [];
 
   return foods
     .map((f)=>{
-      const allTokens = [f.name, ...(f.aliases || [])]
-        .flatMap((txt)=>tokenizeWords(txt).map((w)=>singularizeWord(w)));
-      const rank = rankQueryAgainstTokens(queryTokens, allTokens);
-      if(!rank || rank.similarity < 0.65) return null;
-      return { f, ...rank };
+      const nameNorm = normalizeForMatch(f.name);
+      const aliasNorm = (f.aliases || []).map((a)=>normalizeForMatch(a)).filter(Boolean);
+      if(nameNorm === qn){
+        return { f, priority: 0, similarity: 1 };
+      }
+      if(aliasNorm.includes(qn)){
+        return { f, priority: 1, similarity: 0.99 };
+      }
+
+      const nameSim = similarityScore(qn, nameNorm);
+      const aliasSim = aliasNorm.reduce((best, a)=>Math.max(best, similarityScore(qn, a)), 0);
+      const sim = Math.max(nameSim, aliasSim);
+      if(sim < 0.65) return null;
+      return { f, priority: 2, similarity: sim };
     })
     .filter(Boolean)
-    .sort((a,b)=>
-      (a.matchType - b.matchType) ||
-      (b.similarity - a.similarity) ||
-      (a.f.name.length - b.f.name.length)
-    )
+    .sort((a,b)=>(a.priority-b.priority) || (b.similarity-a.similarity) || (a.f.name.length-b.f.name.length))
     .slice(0,8)
     .map(({f})=>({ ...f, score: guessScore(f.name, f.per100.fiber) }));
 }
@@ -1522,7 +1505,7 @@ async function searchAndRender(){
   try{
     grouped = await searchFoodsByTerm(q);
   }catch(e){
-    $('results').innerHTML = `<div class="muted">Errore nella ricerca locale. Verifica il file foods.json.</div>`;
+    $('results').innerHTML = `<div class="muted">Errore nella ricerca locale. Verifica il file data/foods_it_master.json.</div>`;
     return;
   }
 
@@ -1612,7 +1595,7 @@ window.saveCustomFood = async function(key){
     name,
     aliases: [],
     per100: { kcal, carbs, protein, fat, fiber },
-    category: 'custom',
+    category: 'altro',
     source: 'Custom',
     hint: '(personalizzato)',
     score: guessScore(name, fiber)

@@ -170,7 +170,7 @@
 
     <div id="dbErrorBanner" class="card" style="display:none; margin-top:16px; border-color:rgba(255,120,120,.45); background:rgba(120,20,20,.35);">
       <div class="bd">
-        <b>Errore database locale:</b> impossibile caricare <code>foods.json</code>.
+        <b>Errore database locale:</b> impossibile caricare <code>foods_it.json</code> / <code>foods.json</code>.
         Verifica che il file esista e sia un JSON valido. La ricerca è disabilitata.
       </div>
     </div>
@@ -459,31 +459,68 @@ function setDbStatus(isOk, message=''){
   }
 }
 
+async function readJsonViaXHR(path){
+  return new Promise((resolve, reject)=>{
+    try{
+      const xhr = new XMLHttpRequest();
+      xhr.open('GET', path, true);
+      xhr.overrideMimeType('application/json');
+      xhr.onload = ()=>{
+        if(xhr.status === 0 || (xhr.status >= 200 && xhr.status < 300)){
+          try{ resolve(JSON.parse(xhr.responseText)); }
+          catch(err){ reject(err); }
+          return;
+        }
+        reject(new Error(`HTTP ${xhr.status}`));
+      };
+      xhr.onerror = ()=>reject(new Error('XHR failed'));
+      xhr.send();
+    }catch(err){
+      reject(err);
+    }
+  });
+}
+
+async function readLocalJson(path){
+  try{
+    const res = await fetch(path, { cache: 'no-store' });
+    if(!res.ok) throw new Error(`${path} non disponibile`);
+    return await res.json();
+  }catch(fetchErr){
+    // In apertura diretta file:// alcuni browser bloccano fetch() con "Failed to fetch".
+    if(location.protocol === 'file:'){
+      return await readJsonViaXHR(path);
+    }
+    throw fetchErr;
+  }
+}
+
+function mapLocalFoods(raw){
+  return (Array.isArray(raw) ? raw : []).map((f)=>({
+    name: String(f.name || '').trim(),
+    aliases: Array.isArray(f.aliases) ? f.aliases.map((a)=>String(a || '').trim()).filter(Boolean) : [],
+    per100: {
+      kcal: Number(f.kcal_per100 || 0),
+      protein: Number(f.protein_per100 || 0),
+      carbs: Number(f.carbs_per100 || 0),
+      fat: Number(f.fat_per100 || 0),
+      fiber: Number(f.fiber_per100 || 0),
+    },
+    category: String(f.category || 'other'),
+    source: 'Database locale (Italia)',
+    hint: f.category ? `(${f.category})` : ''
+  })).filter((x)=>x.name);
+}
+
 async function loadLocalFoods(){
   if(localFoodsCache) return localFoodsCache;
   const fileCandidates = ['./foods_it.json', './foods.json'];
-  let lastErr = 'foods.json non disponibile';
+  let lastErr = 'foods_it.json non disponibile';
 
   for(const file of fileCandidates){
     try{
-      const res = await fetch(file, { cache: 'no-store' });
-      if(!res.ok) throw new Error(`${file} non disponibile`);
-      const raw = await res.json();
-      const mapped = (Array.isArray(raw) ? raw : []).map((f)=>({
-        name: String(f.name || '').trim(),
-        aliases: Array.isArray(f.aliases) ? f.aliases.map((a)=>String(a || '').trim()).filter(Boolean) : [],
-        per100: {
-          kcal: Number(f.kcal_per100 || 0),
-          protein: Number(f.protein_per100 || 0),
-          carbs: Number(f.carbs_per100 || 0),
-          fat: Number(f.fat_per100 || 0),
-          fiber: Number(f.fiber_per100 || 0),
-        },
-        category: String(f.category || 'other'),
-        source: 'Database locale (Italia)',
-        hint: f.category ? `(${f.category})` : ''
-      })).filter((x)=>x.name);
-
+      const raw = await readLocalJson(file);
+      const mapped = mapLocalFoods(raw);
       if(!mapped.length) throw new Error(`${file} vuoto o non valido`);
       localFoodsCache = mapped;
       setDbStatus(true);
@@ -493,7 +530,10 @@ async function loadLocalFoods(){
     }
   }
 
-  setDbStatus(false, `Impossibile caricare il database locale (${lastErr})`);
+  const protocolHint = location.protocol === 'file:'
+    ? ' Se stai aprendo il file direttamente dal disco, prova anche con un server locale (es. python -m http.server).'
+    : '';
+  setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
   throw new Error(lastErr);
 }
 

@@ -260,6 +260,7 @@
                   <div class="kv"><span>Carbo</span><span id="mC">—</span></div>
                   <div class="kv"><span>Grassi</span><span id="mF">—</span></div>
                   <div class="kv"><span>Fibre totali (stima)</span><span id="mFi">—</span></div>
+                  <div class="muted" id="mealKcalDebug">—</div>
                   <div class="muted">
                     Lo score 1–10 è euristico: <b>fibre totali</b> + parole trigger (legumi, integrale, cavoli, insalate…). Puoi correggerlo alimento per alimento.
                   </div>
@@ -751,9 +752,40 @@ function dominant(per100){
   return (m===p)?'protein':(m===c)?'carb':'fat';
 }
 
+function isOilOrButter(name){
+  return /olio|burro/i.test(name||'');
+}
+
+function isVegetableLike(name){
+  return /verdur|zucchin|melanz|peperon|pomodor|insalat|lattug|radicch|spinac|cetriol|carot|fagiolin|broccol|cavol|bietol|finocch/i.test(name||'');
+}
+
+function classifyIngredient(food){
+  if(isOilOrButter(food.name)) return 'fat';
+  if(isVegetableLike(food.name)) return 'vegetable';
+  return dominant(food.per100);
+}
+
 function suggestDoses(){
   const type = $('mealType').value;
   const target = mealTargetFor(type);
+  const allProteinOnly = meal.length > 0 && meal.every((f)=>classifyIngredient(f)==='protein');
+
+  const capFor = (food)=>{
+    const kind = classifyIngredient(food);
+    if(kind==='protein') return allProteinOnly ? 300 : 250;
+    if(kind==='carb') return 180;
+    if(kind==='fat') return 25;
+    if(kind==='vegetable') return 300;
+    return 250;
+  };
+
+  const floorFor = (food)=>{
+    const kind = classifyIngredient(food);
+    if(kind==='protein') return 120;
+    if(kind==='carb') return 80;
+    return 0;
+  };
 
   // start from sane bases
   let doses = meal.map(f=>{
@@ -763,7 +795,9 @@ function suggestDoses(){
     if(dom==='carb') base=120;
     if(dom==='fat') base=35;
     if(/olio|burro/i.test(f.name)) base=15;
-    return { ...f, grams: base };
+    const minG = floorFor(f);
+    const maxG = capFor(f);
+    return { ...f, grams: clamp(base, minG, maxG), minG, maxG };
   });
 
   // helper: current macros
@@ -778,14 +812,15 @@ function suggestDoses(){
 
     // best density for that macro
     const best = doses
-      .filter(d=> (d.per100[field]||0) > 0)
+      .filter(d=> (d.per100[field]||0) > 0 && d.grams < d.maxG)
       .sort((a,b)=> (b.per100[field]||0) - (a.per100[field]||0))[0];
     if(!best) return;
 
     const perG = (best.per100[field]||0)/100;
     if(perG<=0) return;
-    const addG = clamp(deficit/perG, 0, 90);
-    best.grams = clamp(best.grams + addG, 0, 900);
+    const room = Math.max(0, best.maxG - best.grams);
+    const addG = clamp(deficit/perG, 0, Math.min(90, room));
+    best.grams = clamp(best.grams + addG, best.minG, best.maxG);
   }
 
   for(let i=0;i<7;i++){
@@ -794,14 +829,84 @@ function suggestDoses(){
     fill('fat');
   }
 
+  // kcal guardrail: if proposal is >105% of target, scale non-oil items down to target kcal
+  const nonOil = doses.filter((d)=>!isOilOrButter(d.name));
+  const fixedOilKcal = doses
+    .filter((d)=>isOilOrButter(d.name))
+    .reduce((s,d)=>s+macrosForGrams(d.per100,d.grams).kcal, 0);
+
+  let totals = cur();
+  if(nonOil.length && totals.kcal > target.kcal*1.05){
+    const nonOilKcal = nonOil.reduce((s,d)=>s+macrosForGrams(d.per100,d.grams).kcal, 0);
+    const allowedForNonOil = Math.max(0, target.kcal - fixedOilKcal);
+    if(nonOilKcal > 0){
+      const factor = clamp(allowedForNonOil / nonOilKcal, 0, 1);
+      nonOil.forEach((d)=>{ d.grams = Math.max(0, d.grams * factor); });
+    }
+
+    totals = cur();
+    // final trim in case of tiny overage
+    let guard = 0;
+    while(totals.kcal > target.kcal + 0.5 && guard < 500){
+      const candidate = nonOil
+        .filter((d)=>d.grams > 1)
+        .sort((a,b)=>((b.per100.kcal||0) - (a.per100.kcal||0)))[0];
+      if(!candidate) break;
+      candidate.grams -= 1;
+      totals = cur();
+      guard++;
+    }
+  }
+
+  // small re-balance: recover protein minimum (meal protein target) without breaking kcal
+  totals = cur();
+  let proteinDeficit = target.protein - totals.protein;
+  if(proteinDeficit > 0.5 && totals.kcal < target.kcal){
+    const proteinItems = doses
+      .filter((d)=>classifyIngredient(d)==='protein' && (d.per100.protein||0) > 0 && d.grams < d.maxG)
+      .sort((a,b)=>(b.per100.protein||0)-(a.per100.protein||0));
+
+    for(const item of proteinItems){
+      if(proteinDeficit <= 0.5) break;
+      totals = cur();
+      const kcalBudget = target.kcal - totals.kcal;
+      if(kcalBudget <= 0.5) break;
+
+      const pPerG = (item.per100.protein||0)/100;
+      const kPerG = Math.max((item.per100.kcal||0)/100, 0.001);
+      const room = Math.max(0, item.maxG - item.grams);
+      const byProtein = proteinDeficit / pPerG;
+      const byKcal = kcalBudget / kPerG;
+      const add = clamp(Math.min(byProtein, byKcal), 0, room);
+      if(add <= 0) continue;
+      item.grams += add;
+      totals = cur();
+      proteinDeficit = target.protein - totals.protein;
+    }
+  }
+
   // round + clamp
   doses = doses.map(d=>{
     let g = d.grams;
-    if(/olio|burro/i.test(d.name)) g = Math.round(g/5)*5;
+    if(isOilOrButter(d.name)) g = Math.round(g/5)*5;
     else g = Math.round(g/10)*10;
-    g = clamp(g, 0, 900);
+    g = clamp(g, 0, d.maxG);
     return { ...d, grams:g };
   });
+
+  totals = cur();
+  if(totals.kcal > target.kcal){
+    let guard = 0;
+    while(totals.kcal > target.kcal + 0.5 && guard < 300){
+      const candidate = doses
+        .filter((d)=>!isOilOrButter(d.name) && d.grams > 0)
+        .sort((a,b)=>((b.per100.kcal||0) - (a.per100.kcal||0)))[0];
+      if(!candidate) break;
+      candidate.grams = Math.max(0, candidate.grams - (candidate.grams % 10 === 0 ? 10 : 5));
+      totals = cur();
+      guard++;
+    }
+  }
 
   return doses;
 }
@@ -909,6 +1014,7 @@ function renderMeal(){
     $('mC').textContent = '—';
     $('mF').textContent = '—';
     $('mFi').textContent = '—';
+    $('mealKcalDebug').textContent = '—';
     return;
   }
 
@@ -947,6 +1053,7 @@ function renderMeal(){
   $('mC').textContent = `${r1(totals.carbs)} g`;
   $('mF').textContent = `${r1(totals.fat)} g`;
   $('mFi').textContent = `${r01(totals.fiber)} g`;
+  $('mealKcalDebug').textContent = `Target pasto: ${r1(mt.kcal)} kcal • Proposto: ${r1(totals.kcal)} kcal`;
 
   $('mealScore').textContent = `${r01(score)}/10`;
   const pct = clamp(((score-1)/9)*100, 0, 100);

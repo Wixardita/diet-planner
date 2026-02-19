@@ -432,7 +432,7 @@ function guessScore(name, fiberPer100){
 /* ---------------------------
    Hybrid lookup (USDA primary + OFF fallback)
 ---------------------------- */
-async function offSearch(q){
+async function usdaPrimarySearch(q){
   /* New block: constants for USDA + quality ranking rules. */
   const USDA_API_KEY = '9fSL6bV6V8az5qW2TjtMntbUkh6baYFiYcjr3Ftg';
   const USDA_TYPES_PRIORITY = { 'Foundation': 0, 'SR Legacy': 1, 'Branded': 2, 'Survey (FNDDS)': 3, 'Survey': 3 };
@@ -571,15 +571,31 @@ async function offSearch(q){
   const merged = [];
   for(const term of queries){
     let termResults = await searchUsdaTerm(term);
-    if(!termResults.length) termResults = await searchOffTerm(term);
+    if(termResults.length){
+      console.log(`[search] "${term}" source=USDA (primary)`);
+    }
     if(!termResults.length){
+      termResults = await searchOffTerm(term);
+      if(termResults.length) console.log(`[search] "${term}" source=OpenFoodFacts (fallback)`);
+    }
+    if(!termResults.length){
+      console.log(`[search] "${term}" source=none, trying curated fallback`);
       for(const fbTerm of CURATED_FALLBACK){
         const fbUsda = await searchUsdaTerm(fbTerm);
-        if(fbUsda.length){ termResults = fbUsda; break; }
+        if(fbUsda.length){
+          termResults = fbUsda;
+          console.log(`[search] "${term}" source=USDA (curated fallback term: ${fbTerm})`);
+          break;
+        }
         const fbOff = await searchOffTerm(fbTerm);
-        if(fbOff.length){ termResults = fbOff; break; }
+        if(fbOff.length){
+          termResults = fbOff;
+          console.log(`[search] "${term}" source=OpenFoodFacts (curated fallback term: ${fbTerm})`);
+          break;
+        }
       }
     }
+    if(!termResults.length) console.log(`[search] "${term}" source=none (no USDA/OFF results)`);
     merged.push(...termResults);
   }
 
@@ -919,7 +935,7 @@ async function searchAndRender(){
 
   let results;
   try{
-    results = await offSearch(q);
+    results = await usdaPrimarySearch(q);
   }catch(e){
     $('results').innerHTML = `<div class="muted">Errore nella ricerca online (USDA/Open Food Facts). Riprova.</div>`;
     return;

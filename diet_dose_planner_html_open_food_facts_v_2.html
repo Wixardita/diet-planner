@@ -430,65 +430,100 @@ function guessScore(name, fiberPer100){
 }
 
 /* ---------------------------
-   Hybrid lookup (USDA primary + OFF fallback)
+   Local DB lookup + fuzzy + USDA fallback
 ---------------------------- */
+let localFoodsCache = null;
+
+async function loadLocalFoods(){
+  if(localFoodsCache) return localFoodsCache;
+  try{
+    const res = await fetch('./foods.json', { cache: 'no-store' });
+    if(!res.ok) throw new Error('foods.json non disponibile');
+    const raw = await res.json();
+    localFoodsCache = (Array.isArray(raw) ? raw : []).map((f)=>({
+      name: String(f.name || '').trim(),
+      per100: {
+        kcal: Number(f.kcal_per100 || 0),
+        protein: Number(f.protein_per100 || 0),
+        carbs: Number(f.carbs_per100 || 0),
+        fat: Number(f.fat_per100 || 0),
+        fiber: Number(f.fiber_per100 || 0),
+      },
+      category: String(f.category || 'other'),
+      source: 'Locale',
+      hint: f.category ? `(${f.category})` : ''
+    })).filter((x)=>x.name);
+  }catch(e){
+    localFoodsCache = [];
+  }
+  return localFoodsCache;
+}
+
+function normalizeText(s){
+  return String(s || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function levenshtein(a,b){
+  const m = a.length, n = b.length;
+  if(!m) return n;
+  if(!n) return m;
+  const dp = Array.from({length:m+1}, ()=>Array(n+1).fill(0));
+  for(let i=0;i<=m;i++) dp[i][0]=i;
+  for(let j=0;j<=n;j++) dp[0][j]=j;
+  for(let i=1;i<=m;i++){
+    for(let j=1;j<=n;j++){
+      const cost = a[i-1]===b[j-1] ? 0 : 1;
+      dp[i][j] = Math.min(dp[i-1][j]+1, dp[i][j-1]+1, dp[i-1][j-1]+cost);
+    }
+  }
+  return dp[m][n];
+}
+
+function localSearch(foods, term){
+  const qn = normalizeText(term);
+  if(!qn) return [];
+  const exactish = foods
+    .map((f)=>({ f, n: normalizeText(f.name) }))
+    .filter(({n})=>n.includes(qn) || qn.includes(n))
+    .sort((a,b)=>a.n.length-b.n.length)
+    .slice(0,8)
+    .map(({f})=>({ ...f, score: guessScore(f.name, f.per100.fiber) }));
+
+  if(exactish.length) return exactish;
+
+  return foods
+    .map((f)=>{
+      const n = normalizeText(f.name);
+      const d = levenshtein(qn, n);
+      const ratio = d / Math.max(qn.length, n.length, 1);
+      return { f, ratio };
+    })
+    .filter((x)=>x.ratio <= 0.42)
+    .sort((a,b)=>a.ratio-b.ratio)
+    .slice(0,8)
+    .map(({f})=>({ ...f, score: guessScore(f.name, f.per100.fiber) }));
+}
+
 async function usdaPrimarySearch(q){
-  /* New block: constants for USDA + quality ranking rules. */
   const USDA_API_KEY = '9fSL6bV6V8az5qW2TjtMntbUkh6baYFiYcjr3Ftg';
   const USDA_TYPES_PRIORITY = { 'Foundation': 0, 'SR Legacy': 1, 'Branded': 2, 'Survey (FNDDS)': 3, 'Survey': 3 };
   const RECIPE_INDICATORS = ['with','and','style','flavor','prepared','recipe','meal','dish'];
-  const RECIPE_INDICATOR_RE = new RegExp(`\\b(${RECIPE_INDICATORS.join('|')})\\b`, 'i');
-  const CURATED_FALLBACK = ['chicken','rice','egg','banana','yogurt','avocado','salmon','potato'];
-
-  /* Existing OFF filter settings retained for fallback usage. */
-  const ALLOWED_PNNS2 = new Set([
-    'Fruits and vegetables',
-    'Cereals and potatoes',
-    'Meat',
-    'Fish and seafood',
-    'Milk and dairy products',
-    'Eggs',
-    'Fats',
-    'Beverages'
-  ]);
-  const RECIPE_WORDS = /\b(ricetta|recipe|recette|piatto|dish|menu|meal|ready\s*meal|prepared\s*meal|insalata|salad|zuppa|soup|pasta|risotto|lasagna|burger|sandwich|bowl|mix|with|and|style|flavor)\b/i;
-  const CONNECTORS = /\b(with|con|and|e|a\sla|alla|al|ai|agli|alle|con\s|w\/|style)\b/i;
+  const RECIPE_INDICATOR_RE = new RegExp(`\b(${RECIPE_INDICATORS.join('|')})\b`, 'i');
 
   const terms = q.split(',').map(x=>x.trim()).filter(Boolean);
   const queries = terms.length ? terms : [q.trim()];
 
-  const getName = (p, term) => (p.product_name || p.generic_name || p.brands || term || '').trim();
-  const hasNutrition = (n) => [
-    n['energy-kcal_100g'], n['energy_kcal_100g'], n['proteins_100g'], n['carbohydrates_100g'], n['fat_100g']
-  ].some(v => v != null && isFinite(Number(v)) && Number(v) > 0);
-
-  const ingredientRank = (name) => {
-    const cleaned = String(name || '').trim();
-    const words = cleaned.split(/\s+/).filter(Boolean).length || 1;
-    let rank = 0;
-    rank += cleaned.length / 200;
-    rank += (words-1) * 0.8;
-    if(RECIPE_WORDS.test(cleaned)) rank += 8;
-    if(CONNECTORS.test(cleaned)) rank += 3;
-    return rank;
-  };
-
-  /* Existing OFF request helper kept as fallback path. */
-  async function fetchProducts(term){
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(term)}&search_simple=1&action=process&json=1&page_size=24`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('OFF search failed');
-    const data = await res.json();
-    return (data.products || []).slice(0,24).map(p=>({ p, name: getName(p, term) }));
-  }
-
-  /* New block: map USDA nutrient labels into current app macro schema. */
   function nutrientByName(nutrients, wanted){
     const found = (nutrients || []).find(n => wanted.includes(String(n.nutrientName || '').trim()));
     return Number(found?.value || 0) || 0;
   }
 
-  /* New block: normalize USDA rows to app result format. */
   function mapUsdaFood(food){
     const name = String(food.description || '').trim();
     const per100 = {
@@ -512,7 +547,6 @@ async function usdaPrimarySearch(q){
     };
   }
 
-  /* New block: search USDA as primary source per single term. */
   async function searchUsdaTerm(term){
     const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(term)}&pageSize=8&api_key=${USDA_API_KEY}`;
     try{
@@ -532,74 +566,14 @@ async function usdaPrimarySearch(q){
     }
   }
 
-  /* New block: OFF fallback for one term when USDA has zero usable rows. */
-  async function searchOffTerm(term){
-    let all = [];
-    try{
-      all = await fetchProducts(term);
-    }catch(e){
-      return [];
-    }
-    return all
-      .filter(({p,name})=>{
-        if(!name) return false;
-        if(RECIPE_WORDS.test(name) || RECIPE_INDICATOR_RE.test(name)) return false;
-        const n = p.nutriments || {};
-        if(!hasNutrition(n)) return false;
-        if(p.nutrition_data_per && String(p.nutrition_data_per).toLowerCase() !== '100g') return false;
-        if(p.pnns_groups_2 && !ALLOWED_PNNS2.has(p.pnns_groups_2)) return false;
-        return true;
-      })
-      .sort((a,b)=> ingredientRank(a.name) - ingredientRank(b.name))
-      .slice(0,8)
-      .map(({p,name})=>{
-        const n = p.nutriments || {};
-        const per100 = {
-          kcal: Number(n['energy-kcal_100g'] ?? n['energy_kcal_100g'] ?? 0),
-          protein: Number(n['proteins_100g'] ?? 0),
-          carbs: Number(n['carbohydrates_100g'] ?? 0),
-          fat: Number(n['fat_100g'] ?? 0),
-          fiber: Number(n['fiber_100g'] ?? 0),
-        };
-        const hint = p.pnns_groups_2 ? `(${p.pnns_groups_2})` : (p.brands ? `(${p.brands})` : (p.quantity ? `(${p.quantity})` : ''));
-        const score = guessScore(name, per100.fiber);
-        return { name, per100, score, source:'OpenFoodFacts', hint, __rank: { macroCompleteness: 0, dataTypePriority: 99, nameLen: name.length } };
-      });
-  }
-
-  /* New block: hybrid term pipeline + curated fallback if a term yields nothing twice. */
   const merged = [];
   for(const term of queries){
-    let termResults = await searchUsdaTerm(term);
-    if(termResults.length){
-      console.log(`[search] "${term}" source=USDA (primary)`);
-    }
-    if(!termResults.length){
-      termResults = await searchOffTerm(term);
-      if(termResults.length) console.log(`[search] "${term}" source=OpenFoodFacts (fallback)`);
-    }
-    if(!termResults.length){
-      console.log(`[search] "${term}" source=none, trying curated fallback`);
-      for(const fbTerm of CURATED_FALLBACK){
-        const fbUsda = await searchUsdaTerm(fbTerm);
-        if(fbUsda.length){
-          termResults = fbUsda;
-          console.log(`[search] "${term}" source=USDA (curated fallback term: ${fbTerm})`);
-          break;
-        }
-        const fbOff = await searchOffTerm(fbTerm);
-        if(fbOff.length){
-          termResults = fbOff;
-          console.log(`[search] "${term}" source=OpenFoodFacts (curated fallback term: ${fbTerm})`);
-          break;
-        }
-      }
-    }
-    if(!termResults.length) console.log(`[search] "${term}" source=none (no USDA/OFF results)`);
+    const termResults = await searchUsdaTerm(term);
+    if(termResults.length) console.log(`[search] "${term}" source=USDA (fallback)`);
+    if(!termResults.length) console.log(`[search] "${term}" source=none (no local/USDA results)`);
     merged.push(...termResults);
   }
 
-  /* New block: global de-duplication + ranking preference by macros/type/shortness. */
   const deduped = [];
   const seen = new Set();
   for(const item of merged.sort((a,b)=>
@@ -614,20 +588,34 @@ async function usdaPrimarySearch(q){
     if(deduped.length >= 8) break;
   }
 
-  return deduped.map(({__rank, ...it})=>it).map(({p,name,...rest})=>{
-    if(!p) return { name, ...rest };
-    const n = p.nutriments || {};
-    const per100 = {
-      kcal: Number(n['energy-kcal_100g'] ?? n['energy_kcal_100g'] ?? 0),
-      protein: Number(n['proteins_100g'] ?? 0),
-      carbs: Number(n['carbohydrates_100g'] ?? 0),
-      fat: Number(n['fat_100g'] ?? 0),
-      fiber: Number(n['fiber_100g'] ?? 0),
-    };
-    const hint = p.pnns_groups_2 ? `(${p.pnns_groups_2})` : (p.brands ? `(${p.brands})` : (p.quantity ? `(${p.quantity})` : ''));
-    const score = guessScore(name, per100.fiber);
-    return { name, per100, score, source:'OpenFoodFacts', hint };
-  });
+  return deduped.map(({__rank, ...it})=>it);
+}
+
+async function searchFoods(q){
+  const foods = await loadLocalFoods();
+  const terms = q.split(',').map(x=>x.trim()).filter(Boolean);
+  const queries = terms.length ? terms : [q.trim()];
+
+  const localMerged = [];
+  for(const term of queries){
+    const local = localSearch(foods, term);
+    if(local.length){
+      console.log(`[search] "${term}" source=local`);
+      localMerged.push(...local);
+    }
+  }
+
+  if(localMerged.length){
+    const seen = new Set();
+    return localMerged.filter((x)=>{
+      const k = x.name.toLowerCase();
+      if(seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    }).slice(0,8);
+  }
+
+  return usdaPrimarySearch(q);
 }
 
 /* ---------------------------
@@ -935,9 +923,9 @@ async function searchAndRender(){
 
   let results;
   try{
-    results = await usdaPrimarySearch(q);
+    results = await searchFoods(q);
   }catch(e){
-    $('results').innerHTML = `<div class="muted">Errore nella ricerca online (USDA/Open Food Facts). Riprova.</div>`;
+    $('results').innerHTML = `<div class="muted">Errore nella ricerca (database locale/USDA). Riprova.</div>`;
     return;
   }
 

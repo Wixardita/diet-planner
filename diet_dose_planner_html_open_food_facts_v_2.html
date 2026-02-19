@@ -515,22 +515,31 @@ async function offSearch(q){
   /* New block: search USDA as primary source per single term. */
   async function searchUsdaTerm(term){
     const url = `https://api.nal.usda.gov/fdc/v1/foods/search?query=${encodeURIComponent(term)}&pageSize=8&api_key=${USDA_API_KEY}`;
-    const res = await fetch(url);
-    if(!res.ok) throw new Error('USDA search failed');
-    const data = await res.json();
-    return (data.foods || [])
-      .map(mapUsdaFood)
-      .filter(Boolean)
-      .sort((a,b)=>
-        b.__rank.macroCompleteness - a.__rank.macroCompleteness ||
-        a.__rank.dataTypePriority - b.__rank.dataTypePriority ||
-        a.__rank.nameLen - b.__rank.nameLen
-      );
+    try{
+      const res = await fetch(url);
+      if(!res.ok) return [];
+      const data = await res.json();
+      return (data.foods || [])
+        .map(mapUsdaFood)
+        .filter(Boolean)
+        .sort((a,b)=>
+          b.__rank.macroCompleteness - a.__rank.macroCompleteness ||
+          a.__rank.dataTypePriority - b.__rank.dataTypePriority ||
+          a.__rank.nameLen - b.__rank.nameLen
+        );
+    }catch(e){
+      return [];
+    }
   }
 
   /* New block: OFF fallback for one term when USDA has zero usable rows. */
   async function searchOffTerm(term){
-    const all = await fetchProducts(term);
+    let all = [];
+    try{
+      all = await fetchProducts(term);
+    }catch(e){
+      return [];
+    }
     return all
       .filter(({p,name})=>{
         if(!name) return false;
@@ -912,7 +921,7 @@ async function searchAndRender(){
   try{
     results = await offSearch(q);
   }catch(e){
-    $('results').innerHTML = `<div class="muted">Errore nella ricerca su Open Food Facts. Riprova.</div>`;
+    $('results').innerHTML = `<div class="muted">Errore nella ricerca online (USDA/Open Food Facts). Riprova.</div>`;
     return;
   }
 

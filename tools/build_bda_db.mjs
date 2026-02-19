@@ -29,6 +29,15 @@ function normalizeName(value) {
     .trim();
 }
 
+function canonicalMergeName(value) {
+  return normalizeName(value)
+    .replace(/\b(di|del|della|dello|dei|delle|al|alla|alle|con|senza)\b/g, ' ')
+    .replace(/\b(crudo|cruda|fresco|fresca|freschi|fresche|pastorizzato|pastorizzata|biologico|biologica|nostrano|nostrana|intero|intera)\b/g, ' ')
+    .replace(/\b(cotto|cotta)\s+al\s+vapore\b/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 function extractMacros(foodComponents) {
   const out = { kcal: null, protein: null, carbs: null, fat: null, fiber: null };
 
@@ -70,13 +79,22 @@ async function fetchList() {
 function dedupeEntries(entries) {
   const merged = new Map();
   for (const entry of entries) {
-    const sig = `${normalizeName(entry.name)}|${JSON.stringify(entry.per100)}`;
+    const sig = `${canonicalMergeName(entry.name)}|${JSON.stringify(entry.per100)}`;
     if (!merged.has(sig)) {
       merged.set(sig, { ...entry, aliases: [...entry.aliases] });
       continue;
     }
     const existing = merged.get(sig);
-    if (entry.name !== existing.name && !existing.aliases.includes(entry.name)) {
+    const keepCurrentAsPrimary = entry.name.length < existing.name.length;
+    if (keepCurrentAsPrimary) {
+      if (!entry.aliases.includes(existing.name)) entry.aliases.push(existing.name);
+      for (const alias of existing.aliases) {
+        if (!entry.aliases.includes(alias) && alias !== entry.name) entry.aliases.push(alias);
+      }
+      merged.set(sig, { ...entry, aliases: entry.aliases });
+      continue;
+    }
+    if (entry.name !== existing.name && !existing.aliases.includes(entry.name) && entry.name !== canonicalMergeName(existing.name)) {
       existing.aliases.push(entry.name);
     }
   }

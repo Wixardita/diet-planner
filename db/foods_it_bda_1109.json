@@ -2,7 +2,9 @@
   {
     "id": "bda:legacy-0001",
     "name": "aceto di vino",
-    "aliases": [],
+    "aliases": [
+      "aceto di vino fresco"
+    ],
     "category": "altro",
     "per100": {
       "kcal": 19,
@@ -81,7 +83,9 @@
       "albume d'uovo biologico",
       "albume d'uovo crudo",
       "albume d'uovo fresco",
-      "albume d'uovo nostrano"
+      "albume d'uovo nostrano",
+      "albume d'uovo intero",
+      "albume d'uovo pastorizzato"
     ],
     "category": "uova",
     "per100": {
@@ -308,7 +312,8 @@
     "aliases": [
       "asiago biologico",
       "asiago fresco",
-      "asiago nostrano"
+      "asiago nostrano",
+      "asiago intero"
     ],
     "category": "latticini",
     "per100": {
@@ -725,7 +730,8 @@
     "aliases": [
       "burro chiarificato biologico",
       "burro chiarificato fresco",
-      "burro chiarificato nostrano"
+      "burro chiarificato nostrano",
+      "burro chiarificato intero"
     ],
     "category": "latticini",
     "per100": {
@@ -741,7 +747,9 @@
   {
     "id": "bda:legacy-0040",
     "name": "cacao amaro",
-    "aliases": [],
+    "aliases": [
+      "cacao amaro fresco"
+    ],
     "category": "altro",
     "per100": {
       "kcal": 228,
@@ -759,7 +767,8 @@
     "aliases": [
       "caciocavallo biologico",
       "caciocavallo fresco",
-      "caciocavallo nostrano"
+      "caciocavallo nostrano",
+      "caciocavallo intero"
     ],
     "category": "latticini",
     "per100": {
@@ -778,7 +787,8 @@
     "aliases": [
       "caciotta biologico",
       "caciotta fresco",
-      "caciotta nostrano"
+      "caciotta nostrano",
+      "caciotta intero"
     ],
     "category": "latticini",
     "per100": {
@@ -889,7 +899,9 @@
   {
     "id": "bda:legacy-0048",
     "name": "cappero",
-    "aliases": [],
+    "aliases": [
+      "cappero fresco"
+    ],
     "category": "altro",
     "per100": {
       "kcal": 23,
@@ -908,7 +920,8 @@
       "caprino fresco",
       "caprino fresco biologico",
       "caprino fresco fresco",
-      "caprino fresco nostrano"
+      "caprino fresco nostrano",
+      "caprino intero"
     ],
     "category": "latticini",
     "per100": {
@@ -1991,7 +2004,8 @@
     "aliases": [
       "fiocchi di latte biologico",
       "fiocchi di latte fresco",
-      "fiocchi di latte nostrano"
+      "fiocchi di latte nostrano",
+      "fiocchi di latte intero"
     ],
     "category": "latticini",
     "per100": {
@@ -2010,7 +2024,8 @@
     "aliases": [
       "fontina biologico",
       "fontina fresco",
-      "fontina nostrano"
+      "fontina nostrano",
+      "fontina intero"
     ],
     "category": "latticini",
     "per100": {
@@ -2102,7 +2117,8 @@
     "aliases": [
       "gorgonzola biologico",
       "gorgonzola fresco",
-      "gorgonzola nostrano"
+      "gorgonzola nostrano",
+      "gorgonzola intero"
     ],
     "category": "latticini",
     "per100": {
@@ -2121,7 +2137,8 @@
     "aliases": [
       "grana padano biologico",
       "grana padano fresco",
-      "grana padano nostrano"
+      "grana padano nostrano",
+      "grana padano intero"
     ],
     "category": "latticini",
     "per100": {
@@ -2311,7 +2328,8 @@
       "latte intero",
       "latte intero biologico",
       "latte intero fresco",
-      "latte intero nostrano"
+      "latte intero nostrano",
+      "latte fresco"
     ],
     "category": "latticini",
     "per100": {
@@ -2330,7 +2348,8 @@
     "aliases": [
       "latte parzialmente scremato biologico",
       "latte parzialmente scremato fresco",
-      "latte parzialmente scremato nostrano"
+      "latte parzialmente scremato nostrano",
+      "latte parzialmente scremato intero"
     ],
     "category": "latticini",
     "per100": {
@@ -2349,7 +2368,8 @@
     "aliases": [
       "latte scremato biologico",
       "latte scremato fresco",
-      "latte scremato nostrano"
+      "latte scremato nostrano",
+      "latte scremato intero"
     ],
     "category": "latticini",
     "per100": {
@@ -2441,7 +2461,9 @@
   {
     "id": "bda:legacy-0130",
     "name": "lievito alimentare",
-    "aliases": [],
+    "aliases": [
+      "lievito alimentare fresco"
+    ],
     "category": "altro",
     "per100": {
       "kcal": 325,
@@ -2615,7 +2637,8 @@
     "aliases": [
       "mascarpone biologico",
       "mascarpone fresco",
-      "mascarpone nostrano"
+      "mascarpone nostrano",
+      "mascarpone intero"
     ],
     "category": "latticini",
     "per100": {
@@ -2770,7 +2793,9 @@
   {
     "id": "bda:legacy-0147",
     "name": "miele",
-    "aliases": [],
+    "aliases": [
+      "miele fresco"
+    ],
     "category": "altro",
     "per100": {
       "kcal": 304,
@@ -2846,7 +2871,8 @@
     "aliases": [
       "mozzarella biologico",
       "mozzarella fresco",
-      "mozzarella nostrano"
+      "mozzarella nostrano",
+      "mozzarella intero"
     ],
     "category": "latticini",
     "per100": {
@@ -3142,7 +3168,8 @@
     "aliases": [
       "parmigiano reggiano biologico",
       "parmigiano reggiano fresco",
-      "parmigiano reggiano nostrano"
+      "parmigiano reggiano nostrano",
+      "parmigiano reggiano intero"
     ],
     "category": "latticini",
     "per100": {
@@ -3235,7 +3262,8 @@
     "aliases": [
       "pecorino romano biologico",
       "pecorino romano fresco",
-      "pecorino romano nostrano"
+      "pecorino romano nostrano",
+      "pecorino romano intero"
     ],
     "category": "latticini",
     "per100": {
@@ -3753,7 +3781,8 @@
     "aliases": [
       "provolone biologico",
       "provolone fresco",
-      "provolone nostrano"
+      "provolone nostrano",
+      "provolone intero"
     ],
     "category": "latticini",
     "per100": {
@@ -3968,7 +3997,8 @@
     "aliases": [
       "ricotta vaccina biologico",
       "ricotta vaccina fresco",
-      "ricotta vaccina nostrano"
+      "ricotta vaccina nostrano",
+      "ricotta vaccina intero"
     ],
     "category": "latticini",
     "per100": {
@@ -4135,7 +4165,8 @@
     "aliases": [
       "robiola biologico",
       "robiola fresco",
-      "robiola nostrano"
+      "robiola nostrano",
+      "robiola intero"
     ],
     "category": "latticini",
     "per100": {
@@ -4190,7 +4221,9 @@
   {
     "id": "bda:legacy-0223",
     "name": "sale marino",
-    "aliases": [],
+    "aliases": [
+      "sale marino fresco"
+    ],
     "category": "altro",
     "per100": {
       "kcal": 0,
@@ -4312,27 +4345,6 @@
       "carbs": 11.1,
       "fat": 0.4,
       "fiber": 2
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0230",
-    "name": "albume d'uovo intero",
-    "aliases": [
-      "albume d'uovo",
-      "albume d'uovo biologico",
-      "albume d'uovo crudo",
-      "albume d'uovo fresco",
-      "albume d'uovo nostrano"
-    ],
-    "category": "uova",
-    "per100": {
-      "kcal": 52,
-      "protein": 10.9,
-      "carbs": 0.7,
-      "fat": 0.2,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -4479,26 +4491,6 @@
       "protein": 18,
       "carbs": 0,
       "fat": 9,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0238",
-    "name": "asiago intero",
-    "aliases": [
-      "asiago",
-      "asiago biologico",
-      "asiago fresco",
-      "asiago nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 356,
-      "protein": 24,
-      "carbs": 3.5,
-      "fat": 27,
       "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
@@ -4763,26 +4755,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0251",
-    "name": "burro chiarificato intero",
-    "aliases": [
-      "burro chiarificato",
-      "burro chiarificato biologico",
-      "burro chiarificato fresco",
-      "burro chiarificato nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 900,
-      "protein": 0,
-      "carbs": 0,
-      "fat": 100,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0252",
     "name": "cacao amaro secco",
     "aliases": [
@@ -4795,46 +4767,6 @@
       "carbs": 57.9,
       "fat": 13.7,
       "fiber": 37
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0253",
-    "name": "caciocavallo intero",
-    "aliases": [
-      "caciocavallo",
-      "caciocavallo biologico",
-      "caciocavallo fresco",
-      "caciocavallo nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 439,
-      "protein": 37,
-      "carbs": 1.6,
-      "fat": 31,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0254",
-    "name": "caciotta intero",
-    "aliases": [
-      "caciotta",
-      "caciotta biologico",
-      "caciotta fresco",
-      "caciotta nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 341,
-      "protein": 22,
-      "carbs": 2.1,
-      "fat": 27,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -4916,27 +4848,6 @@
       "carbs": 4.9,
       "fat": 0.9,
       "fiber": 3.2
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0259",
-    "name": "caprino intero",
-    "aliases": [
-      "caprino",
-      "caprino fresco",
-      "caprino fresco biologico",
-      "caprino fresco fresco",
-      "caprino fresco nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 264,
-      "protein": 18,
-      "carbs": 3,
-      "fat": 20,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -5594,46 +5505,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0290",
-    "name": "fiocchi di latte intero",
-    "aliases": [
-      "fiocchi di latte",
-      "fiocchi di latte biologico",
-      "fiocchi di latte fresco",
-      "fiocchi di latte nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 98,
-      "protein": 11.1,
-      "carbs": 3.4,
-      "fat": 4.3,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0291",
-    "name": "fontina intero",
-    "aliases": [
-      "fontina",
-      "fontina biologico",
-      "fontina fresco",
-      "fontina nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 389,
-      "protein": 25,
-      "carbs": 1.5,
-      "fat": 31,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0292",
     "name": "fragola annurca",
     "aliases": [
@@ -5688,46 +5559,6 @@
       "protein": 0,
       "carbs": 0,
       "fat": 100,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0295",
-    "name": "gorgonzola intero",
-    "aliases": [
-      "gorgonzola",
-      "gorgonzola biologico",
-      "gorgonzola fresco",
-      "gorgonzola nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 353,
-      "protein": 21,
-      "carbs": 2.3,
-      "fat": 29,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0296",
-    "name": "grana padano intero",
-    "aliases": [
-      "grana padano",
-      "grana padano biologico",
-      "grana padano fresco",
-      "grana padano nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 398,
-      "protein": 33,
-      "carbs": 0,
-      "fat": 29,
       "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
@@ -5854,67 +5685,6 @@
       "protein": 0,
       "carbs": 0,
       "fat": 100,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0303",
-    "name": "latte intero",
-    "aliases": [
-      "latte",
-      "latte intero",
-      "latte intero biologico",
-      "latte intero fresco",
-      "latte intero nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 64,
-      "protein": 3.3,
-      "carbs": 4.8,
-      "fat": 3.6,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0304",
-    "name": "latte parzialmente scremato intero",
-    "aliases": [
-      "latte parzialmente scremato",
-      "latte parzialmente scremato biologico",
-      "latte parzialmente scremato fresco",
-      "latte parzialmente scremato nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 46,
-      "protein": 3.5,
-      "carbs": 5,
-      "fat": 1.6,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0305",
-    "name": "latte scremato intero",
-    "aliases": [
-      "latte scremato",
-      "latte scremato biologico",
-      "latte scremato fresco",
-      "latte scremato nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 34,
-      "protein": 3.4,
-      "carbs": 5,
-      "fat": 0.2,
       "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
@@ -6110,26 +5880,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0315",
-    "name": "mascarpone intero",
-    "aliases": [
-      "mascarpone",
-      "mascarpone biologico",
-      "mascarpone fresco",
-      "mascarpone nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 435,
-      "protein": 4.6,
-      "carbs": 4.3,
-      "fat": 44,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0316",
     "name": "mela annurca",
     "aliases": [
@@ -6295,26 +6045,6 @@
       "carbs": 14.5,
       "fat": 0.3,
       "fiber": 2.4
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0324",
-    "name": "mozzarella intero",
-    "aliases": [
-      "mozzarella",
-      "mozzarella biologico",
-      "mozzarella fresco",
-      "mozzarella nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 253,
-      "protein": 18,
-      "carbs": 2,
-      "fat": 19,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -6565,26 +6295,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0338",
-    "name": "parmigiano reggiano intero",
-    "aliases": [
-      "parmigiano reggiano",
-      "parmigiano reggiano biologico",
-      "parmigiano reggiano fresco",
-      "parmigiano reggiano nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 402,
-      "protein": 35,
-      "carbs": 0,
-      "fat": 30,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0339",
     "name": "patata integrale",
     "aliases": [
@@ -6622,26 +6332,6 @@
       "carbs": 20.1,
       "fat": 0.1,
       "fiber": 3
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0341",
-    "name": "pecorino romano intero",
-    "aliases": [
-      "pecorino romano",
-      "pecorino romano biologico",
-      "pecorino romano fresco",
-      "pecorino romano nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 387,
-      "protein": 32,
-      "carbs": 0,
-      "fat": 27,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -6992,26 +6682,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0358",
-    "name": "provolone intero",
-    "aliases": [
-      "provolone",
-      "provolone biologico",
-      "provolone fresco",
-      "provolone nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 351,
-      "protein": 26,
-      "carbs": 2.1,
-      "fat": 26,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0359",
     "name": "prugna annurca",
     "aliases": [
@@ -7146,26 +6816,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0365",
-    "name": "ricotta vaccina intero",
-    "aliases": [
-      "ricotta vaccina",
-      "ricotta vaccina biologico",
-      "ricotta vaccina fresco",
-      "ricotta vaccina nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 174,
-      "protein": 11.3,
-      "carbs": 3,
-      "fat": 13,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0366",
     "name": "riso arborio integrale",
     "aliases": [
@@ -7250,26 +6900,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0370",
-    "name": "robiola intero",
-    "aliases": [
-      "robiola",
-      "robiola biologico",
-      "robiola fresco",
-      "robiola nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 311,
-      "protein": 18,
-      "carbs": 2.5,
-      "fat": 25,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0371",
     "name": "rucola romanesco",
     "aliases": [
@@ -7348,23 +6978,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0375",
-    "name": "aceto di vino fresco",
-    "aliases": [
-      "aceto di vino"
-    ],
-    "category": "altro",
-    "per100": {
-      "kcal": 19,
-      "protein": 0,
-      "carbs": 0.3,
-      "fat": 0,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0376",
     "name": "agretti violetto",
     "aliases": [
@@ -7405,27 +7018,6 @@
       "carbs": 11.1,
       "fat": 0.4,
       "fiber": 2
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0378",
-    "name": "albume d'uovo pastorizzato",
-    "aliases": [
-      "albume d'uovo",
-      "albume d'uovo biologico",
-      "albume d'uovo crudo",
-      "albume d'uovo fresco",
-      "albume d'uovo nostrano"
-    ],
-    "category": "uova",
-    "per100": {
-      "kcal": 52,
-      "protein": 10.9,
-      "carbs": 0.7,
-      "fat": 0.2,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -7876,23 +7468,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0400",
-    "name": "cacao amaro fresco",
-    "aliases": [
-      "cacao amaro"
-    ],
-    "category": "altro",
-    "per100": {
-      "kcal": 228,
-      "protein": 19.6,
-      "carbs": 57.9,
-      "fat": 13.7,
-      "fiber": 37
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0401",
     "name": "caciocavallo parzialmente scremato",
     "aliases": [
@@ -7992,23 +7567,6 @@
       "carbs": 4.6,
       "fat": 0.8,
       "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0406",
-    "name": "cappero fresco",
-    "aliases": [
-      "cappero"
-    ],
-    "category": "altro",
-    "per100": {
-      "kcal": 23,
-      "protein": 2.4,
-      "carbs": 4.9,
-      "fat": 0.9,
-      "fiber": 3.2
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -9037,23 +8595,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0455",
-    "name": "lievito alimentare fresco",
-    "aliases": [
-      "lievito alimentare"
-    ],
-    "category": "altro",
-    "per100": {
-      "kcal": 325,
-      "protein": 40.4,
-      "carbs": 41.2,
-      "fat": 7.6,
-      "fiber": 26.9
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0456",
     "name": "limone gala",
     "aliases": [
@@ -9307,23 +8848,6 @@
       "carbs": 0,
       "fat": 0.7,
       "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0468",
-    "name": "miele fresco",
-    "aliases": [
-      "miele"
-    ],
-    "category": "altro",
-    "per100": {
-      "kcal": 304,
-      "protein": 0.3,
-      "carbs": 82.4,
-      "fat": 0,
-      "fiber": 0.2
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -10365,23 +9889,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0519",
-    "name": "sale marino fresco",
-    "aliases": [
-      "sale marino"
-    ],
-    "category": "altro",
-    "per100": {
-      "kcal": 0,
-      "protein": 0,
-      "carbs": 0,
-      "fat": 0,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0520",
     "name": "salmone mediterraneo",
     "aliases": [
@@ -10460,27 +9967,6 @@
       "carbs": 11.1,
       "fat": 0.4,
       "fiber": 2
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0524",
-    "name": "albume d'uovo fresco",
-    "aliases": [
-      "albume d'uovo",
-      "albume d'uovo biologico",
-      "albume d'uovo crudo",
-      "albume d'uovo fresco",
-      "albume d'uovo nostrano"
-    ],
-    "category": "uova",
-    "per100": {
-      "kcal": 52,
-      "protein": 10.9,
-      "carbs": 0.7,
-      "fat": 0.2,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -13582,26 +13068,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0672",
-    "name": "asiago fresco",
-    "aliases": [
-      "asiago",
-      "asiago biologico",
-      "asiago fresco",
-      "asiago nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 356,
-      "protein": 24,
-      "carbs": 3.5,
-      "fat": 27,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0673",
     "name": "asparago tondo",
     "aliases": [
@@ -13860,66 +13326,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0685",
-    "name": "burro chiarificato fresco",
-    "aliases": [
-      "burro chiarificato",
-      "burro chiarificato biologico",
-      "burro chiarificato fresco",
-      "burro chiarificato nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 900,
-      "protein": 0,
-      "carbs": 0,
-      "fat": 100,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0686",
-    "name": "caciocavallo fresco",
-    "aliases": [
-      "caciocavallo",
-      "caciocavallo biologico",
-      "caciocavallo fresco",
-      "caciocavallo nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 439,
-      "protein": 37,
-      "carbs": 1.6,
-      "fat": 31,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0687",
-    "name": "caciotta fresco",
-    "aliases": [
-      "caciotta",
-      "caciotta biologico",
-      "caciotta fresco",
-      "caciotta nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 341,
-      "protein": 22,
-      "carbs": 2.1,
-      "fat": 27,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0688",
     "name": "caco renetta",
     "aliases": [
@@ -13978,27 +13384,6 @@
       "protein": 20.5,
       "carbs": 4.6,
       "fat": 0.8,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0691",
-    "name": "caprino fresco",
-    "aliases": [
-      "caprino",
-      "caprino fresco",
-      "caprino fresco biologico",
-      "caprino fresco fresco",
-      "caprino fresco nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 264,
-      "protein": 18,
-      "carbs": 3,
-      "fat": 20,
       "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
@@ -14657,46 +14042,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0722",
-    "name": "fiocchi di latte fresco",
-    "aliases": [
-      "fiocchi di latte",
-      "fiocchi di latte biologico",
-      "fiocchi di latte fresco",
-      "fiocchi di latte nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 98,
-      "protein": 11.1,
-      "carbs": 3.4,
-      "fat": 4.3,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0723",
-    "name": "fontina fresco",
-    "aliases": [
-      "fontina",
-      "fontina biologico",
-      "fontina fresco",
-      "fontina nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 389,
-      "protein": 25,
-      "carbs": 1.5,
-      "fat": 31,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0724",
     "name": "fragola renetta",
     "aliases": [
@@ -14751,46 +14096,6 @@
       "protein": 0,
       "carbs": 0,
       "fat": 100,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0727",
-    "name": "gorgonzola fresco",
-    "aliases": [
-      "gorgonzola",
-      "gorgonzola biologico",
-      "gorgonzola fresco",
-      "gorgonzola nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 353,
-      "protein": 21,
-      "carbs": 2.3,
-      "fat": 29,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0728",
-    "name": "grana padano fresco",
-    "aliases": [
-      "grana padano",
-      "grana padano biologico",
-      "grana padano fresco",
-      "grana padano nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 398,
-      "protein": 33,
-      "carbs": 0,
-      "fat": 29,
       "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
@@ -14917,67 +14222,6 @@
       "protein": 0,
       "carbs": 0,
       "fat": 100,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0735",
-    "name": "latte fresco",
-    "aliases": [
-      "latte",
-      "latte intero",
-      "latte intero biologico",
-      "latte intero fresco",
-      "latte intero nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 64,
-      "protein": 3.3,
-      "carbs": 4.8,
-      "fat": 3.6,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0736",
-    "name": "latte parzialmente scremato fresco",
-    "aliases": [
-      "latte parzialmente scremato",
-      "latte parzialmente scremato biologico",
-      "latte parzialmente scremato fresco",
-      "latte parzialmente scremato nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 46,
-      "protein": 3.5,
-      "carbs": 5,
-      "fat": 1.6,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0737",
-    "name": "latte scremato fresco",
-    "aliases": [
-      "latte scremato",
-      "latte scremato biologico",
-      "latte scremato fresco",
-      "latte scremato nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 34,
-      "protein": 3.4,
-      "carbs": 5,
-      "fat": 0.2,
       "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
@@ -15156,26 +14400,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0746",
-    "name": "mascarpone fresco",
-    "aliases": [
-      "mascarpone",
-      "mascarpone biologico",
-      "mascarpone fresco",
-      "mascarpone nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 435,
-      "protein": 4.6,
-      "carbs": 4.3,
-      "fat": 44,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0747",
     "name": "mela renetta",
     "aliases": [
@@ -15324,26 +14548,6 @@
       "carbs": 14.5,
       "fat": 0.3,
       "fiber": 2.4
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0754",
-    "name": "mozzarella fresco",
-    "aliases": [
-      "mozzarella",
-      "mozzarella biologico",
-      "mozzarella fresco",
-      "mozzarella nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 253,
-      "protein": 18,
-      "carbs": 2,
-      "fat": 19,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -15594,26 +14798,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0768",
-    "name": "parmigiano reggiano fresco",
-    "aliases": [
-      "parmigiano reggiano",
-      "parmigiano reggiano biologico",
-      "parmigiano reggiano fresco",
-      "parmigiano reggiano nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 402,
-      "protein": 35,
-      "carbs": 0,
-      "fat": 30,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0769",
     "name": "patata perlato",
     "aliases": [
@@ -15651,26 +14835,6 @@
       "carbs": 20.1,
       "fat": 0.1,
       "fiber": 3
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0771",
-    "name": "pecorino romano fresco",
-    "aliases": [
-      "pecorino romano",
-      "pecorino romano biologico",
-      "pecorino romano fresco",
-      "pecorino romano nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 387,
-      "protein": 32,
-      "carbs": 0,
-      "fat": 27,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000
@@ -16021,26 +15185,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0788",
-    "name": "provolone fresco",
-    "aliases": [
-      "provolone",
-      "provolone biologico",
-      "provolone fresco",
-      "provolone nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 351,
-      "protein": 26,
-      "carbs": 2.1,
-      "fat": 26,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0789",
     "name": "prugna renetta",
     "aliases": [
@@ -16175,26 +15319,6 @@
     "rank": 1000
   },
   {
-    "id": "bda:legacy-0795",
-    "name": "ricotta vaccina fresco",
-    "aliases": [
-      "ricotta vaccina",
-      "ricotta vaccina biologico",
-      "ricotta vaccina fresco",
-      "ricotta vaccina nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 174,
-      "protein": 11.3,
-      "carbs": 3,
-      "fat": 13,
-      "fiber": 0
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
     "id": "bda:legacy-0796",
     "name": "riso arborio perlato",
     "aliases": [
@@ -16274,26 +15398,6 @@
       "carbs": 76,
       "fat": 2.7,
       "fiber": 3.5
-    },
-    "source": "BDA (bda.ieo.it)",
-    "rank": 1000
-  },
-  {
-    "id": "bda:legacy-0800",
-    "name": "robiola fresco",
-    "aliases": [
-      "robiola",
-      "robiola biologico",
-      "robiola fresco",
-      "robiola nostrano"
-    ],
-    "category": "latticini",
-    "per100": {
-      "kcal": 311,
-      "protein": 18,
-      "carbs": 2.5,
-      "fat": 25,
-      "fiber": 0
     },
     "source": "BDA (bda.ieo.it)",
     "rank": 1000

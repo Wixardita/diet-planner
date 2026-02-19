@@ -114,6 +114,11 @@
     .item b{ display:block; margin-bottom:2px; }
     .item .meta{ color: var(--muted); font-size:12px; }
     .item .right{ text-align:right; }
+    .custom-toggle{ cursor:pointer; user-select:none; }
+    .custom-toggle .caret{ display:inline-block; transition: transform .15s ease; margin-right:6px; }
+    .custom-toggle.open .caret{ transform: rotate(90deg); }
+    .custom-form{ margin-top:10px; padding:12px; border:1px solid rgba(255,255,255,.10); border-radius:16px; background:rgba(0,0,0,.18); }
+    .custom-error{ color:#ffb3b3; font-size:12px; margin-top:8px; }
 
     .bar{
       height:10px; border-radius:999px;
@@ -443,7 +448,9 @@ function guessScore(name, fiberPer100){
    Local DB lookup + fuzzy (offline only)
 ---------------------------- */
 let localFoodsCache = null;
+let baseFoodsCache = null;
 let dbLoadError = '';
+let customFoods = load('customFoods', []);
 
 function setDbStatus(isOk, message=''){
   const banner = $('dbErrorBanner');
@@ -522,7 +529,8 @@ async function loadLocalFoods(){
   if(scriptDb && scriptDb.length){
     const mapped = mapLocalFoods(scriptDb);
     if(mapped.length){
-      localFoodsCache = mapped;
+      baseFoodsCache = mapped;
+      localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
       setDbStatus(true);
       return localFoodsCache;
     }
@@ -536,7 +544,8 @@ async function loadLocalFoods(){
       const raw = await readLocalJson(file);
       const mapped = mapLocalFoods(raw);
       if(!mapped.length) throw new Error(`${file} vuoto o non valido`);
-      localFoodsCache = mapped;
+      baseFoodsCache = mapped;
+      localFoodsCache = mergeWithCustomFoods(baseFoodsCache, customFoods);
       setDbStatus(true);
       return localFoodsCache;
     }catch(e){
@@ -549,6 +558,35 @@ async function loadLocalFoods(){
     : '';
   setDbStatus(false, `Impossibile caricare il database locale (${lastErr}).${protocolHint}`);
   throw new Error(lastErr);
+}
+
+function singularizeWord(word){
+  if(word.length <= 3) return word;
+  if(/(ine|oni|ani)$/.test(word)) return word.slice(0,-1);
+  if(/[aeios]$/.test(word)) return word.slice(0,-1);
+  return word;
+}
+
+function normalizeForMatch(s){
+  const n = normalizeText(s);
+  if(!n) return '';
+  return n.split(' ').map((w)=>singularizeWord(w)).join(' ').trim();
+}
+
+function mergeWithCustomFoods(baseFoods, customList){
+  const byNorm = new Map();
+  const put = (food)=>{
+    const key = normalizeForMatch(food.name);
+    if(!key) return;
+    byNorm.set(key, food);
+  };
+  (baseFoods || []).forEach((f)=>put({ ...f }));
+  (customList || []).forEach((f)=>put({ ...f, source:'Custom', hint:'(personalizzato)' }));
+  return Array.from(byNorm.values());
+}
+
+function refreshFoodsCache(){
+  localFoodsCache = mergeWithCustomFoods(baseFoodsCache || [], customFoods || []);
 }
 
 function normalizeText(s){
@@ -578,12 +616,12 @@ function levenshtein(a,b){
 }
 
 function localSearch(foods, term){
-  const qn = normalizeText(term);
+  const qn = normalizeForMatch(term);
   if(!qn) return [];
   const exactish = foods
     .map((f)=>{
-      const nameNorm = normalizeText(f.name);
-      const aliasesNorm = (f.aliases || []).map((a)=>normalizeText(a));
+      const nameNorm = normalizeForMatch(f.name);
+      const aliasesNorm = (f.aliases || []).map((a)=>normalizeForMatch(a));
       return { f, nameNorm, aliasesNorm };
     })
     .filter(({nameNorm, aliasesNorm})=>
@@ -599,8 +637,8 @@ function localSearch(foods, term){
 
   return foods
     .map((f)=>{
-      const nameNorm = normalizeText(f.name);
-      const aliasNorms = (f.aliases || []).map((a)=>normalizeText(a));
+      const nameNorm = normalizeForMatch(f.name);
+      const aliasNorms = (f.aliases || []).map((a)=>normalizeForMatch(a));
       const distances = [nameNorm, ...aliasNorms].map((n)=>levenshtein(qn, n) / Math.max(qn.length, n.length, 1));
       const ratio = Math.min(...distances);
       return { f, ratio };
@@ -609,6 +647,61 @@ function localSearch(foods, term){
     .sort((a,b)=>a.ratio-b.ratio)
     .slice(0,8)
     .map(({f})=>({ ...f, score: guessScore(f.name, f.per100.fiber) }));
+}
+
+function getSuggestions(foods, term, limit=3){
+  const qn = normalizeForMatch(term);
+  if(!qn) return [];
+  return foods
+    .map((f)=>{
+      const candidates = [normalizeForMatch(f.name), ...(f.aliases||[]).map((a)=>normalizeForMatch(a))].filter(Boolean);
+      let rank = 3;
+      let dist = Infinity;
+      for(const c of candidates){
+        if(c.startsWith(qn) || qn.startsWith(c)) rank = Math.min(rank, 1);
+        else if(c.includes(qn) || qn.includes(c)) rank = Math.min(rank, 2);
+        dist = Math.min(dist, levenshtein(qn, c));
+      }
+      return { f, rank, dist };
+    })
+    .sort((a,b)=>(a.rank-b.rank) || (a.dist-b.dist) || a.f.name.localeCompare(b.f.name,'it'))
+    .slice(0, limit)
+    .map((x)=>x.f);
+}
+
+function customFormHtml(term, key){
+  return `
+    <div class="item custom-toggle" id="customToggle-${key}" onclick="toggleCustomForm('${key}')">
+      <div><b><span class="caret">▶</span>Inserisci personalizzato</b></div>
+    </div>
+    <div id="customFormWrap-${key}" style="display:none;">
+      <div class="custom-form">
+        <div class="row">
+          <div>
+            <label>Nome</label>
+            <input id="customName-${key}" placeholder="Es: Riso crudo" value="${escapeHtml(term || '')}" />
+          </div>
+          <div>
+            <label>kcal</label>
+            <input id="customKcal-${key}" type="number" min="0" step="0.1" placeholder="per 100g" />
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div><label>carboidrati (g)</label><input id="customCarbs-${key}" type="number" min="0" step="0.1" /></div>
+          <div><label>proteine (g)</label><input id="customProtein-${key}" type="number" min="0" step="0.1" /></div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div><label>grassi (g)</label><input id="customFat-${key}" type="number" min="0" step="0.1" /></div>
+          <div><label>fibre (g)</label><input id="customFiber-${key}" type="number" min="0" step="0.1" /></div>
+        </div>
+        <div id="customError-${key}" class="custom-error" style="display:none;"></div>
+        <div style="display:flex; gap:10px; margin-top:12px;">
+          <button class="btn primary" onclick="saveCustomFood('${key}')">Salva</button>
+          <button class="btn" onclick="cancelCustomForm('${key}')">Annulla</button>
+        </div>
+      </div>
+    </div>
+  `;
 }
 
 async function searchFoodsByTerm(q){
@@ -944,6 +1037,7 @@ async function searchAndRender(){
 
   const sections = [];
   const flat = [];
+  const foods = await loadLocalFoods();
   for(const group of grouped){
     const cards = group.results.map((r)=>{
       const idx = flat.push(r) - 1;
@@ -961,10 +1055,15 @@ async function searchAndRender(){
       `;
     }).join('');
 
+    const suggestions = (!group.results.length) ? getSuggestions(foods, group.term, 3) : [];
+    const suggestionHtml = suggestions.length
+      ? `<div class="muted" style="margin-bottom:10px;">Nessun risultato. Forse intendevi: <b>${suggestions.map((s)=>escapeHtml(s.name)).join(' • ')}</b></div>`
+      : '<div class="muted" style="margin-bottom:10px;">Nessun risultato.</div>';
+
     sections.push(`
       <div style="margin-top:10px;">
         <div class="kicker" style="margin-bottom:8px;">Termine: <b>${escapeHtml(group.term)}</b></div>
-        ${cards || '<div class="muted">Nessun risultato locale per questo termine.</div>'}
+        ${cards || `${suggestionHtml}${customFormHtml(group.term, `g${sections.length}`)}`}
       </div>
     `);
   }
@@ -978,6 +1077,63 @@ window.addResult = function(idx){
   if(!r) return;
   meal.push(r);
   renderMeal();
+}
+
+window.toggleCustomForm = function(key){
+  const wrap = $(`customFormWrap-${key}`);
+  const t = $(`customToggle-${key}`);
+  if(!wrap || !t) return;
+  const open = wrap.style.display !== 'none';
+  wrap.style.display = open ? 'none' : 'block';
+  t.classList.toggle('open', !open);
+}
+
+window.cancelCustomForm = function(key){
+  const err = $(`customError-${key}`);
+  if(err){ err.style.display='none'; err.textContent=''; }
+  const wrap = $(`customFormWrap-${key}`);
+  const t = $(`customToggle-${key}`);
+  if(wrap) wrap.style.display = 'none';
+  if(t) t.classList.remove('open');
+}
+
+window.saveCustomFood = async function(key){
+  const name = ($(`customName-${key}`)?.value || '').trim();
+  const kcal = Number($(`customKcal-${key}`)?.value || 0);
+  const carbs = Number($(`customCarbs-${key}`)?.value || 0);
+  const protein = Number($(`customProtein-${key}`)?.value || 0);
+  const fat = Number($(`customFat-${key}`)?.value || 0);
+  const fiber = Number($(`customFiber-${key}`)?.value || 0);
+  const err = $(`customError-${key}`);
+  const fail = (msg)=>{ if(err){ err.style.display='block'; err.textContent=msg; } };
+
+  if(!name) return fail('Nome obbligatorio.');
+  if([kcal, carbs, protein, fat, fiber].some((x)=>!isFinite(x) || x < 0)) return fail('I valori numerici devono essere >= 0.');
+  if(kcal < 0 || kcal > 900) return fail('kcal deve essere tra 0 e 900.');
+
+  const customFood = {
+    name,
+    aliases: [],
+    per100: { kcal, carbs, protein, fat, fiber },
+    category: 'custom',
+    source: 'Custom',
+    hint: '(personalizzato)',
+    score: guessScore(name, fiber)
+  };
+
+  const normKey = normalizeForMatch(name);
+  const existing = customFoods.findIndex((f)=>normalizeForMatch(f.name)===normKey);
+  if(existing >= 0) customFoods[existing] = customFood;
+  else customFoods.push(customFood);
+
+  save('customFoods', customFoods);
+  refreshFoodsCache();
+
+  window.__lastResults = window.__lastResults || [];
+  window.__lastResults.unshift(customFood);
+  meal.push(customFood);
+  renderMeal();
+  $('results').innerHTML = `<div class="muted">Alimento personalizzato salvato: <b>${escapeHtml(name)}</b>. Ora è ricercabile e aggiunto al pasto corrente.</div>`;
 }
 
 $('btnLog').addEventListener('click', ()=>{

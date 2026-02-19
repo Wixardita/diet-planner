@@ -261,6 +261,8 @@
                   <div class="kv"><span>Grassi</span><span id="mF">—</span></div>
                   <div class="kv"><span>Fibre totali (stima)</span><span id="mFi">—</span></div>
                   <div class="muted" id="mealKcalDebug">—</div>
+                  <div class="muted" id="mealTargetsLine">—</div>
+                  <div class="muted" id="mealConstraintNote"></div>
                   <div class="muted">
                     Lo score 1–10 è euristico: <b>fibre totali</b> + parole trigger (legumi, integrale, cavoli, insalate…). Puoi correggerlo alimento per alimento.
                   </div>
@@ -391,6 +393,7 @@ $('isWorkout').checked = !!isWorkout;
 
 let meal = []; // selected foods for current meal: {name, per100:{kcal,protein,carbs,fat,fiber}, score, source, hint}
 let log  = load('log', []); // tracking only; DOES NOT affect doses
+let doseAdjustState = {}; // per-row interactive grams/lock overrides
 
 function todayKey(){
   const d=new Date();
@@ -766,6 +769,20 @@ function classifyIngredient(food){
   return dominant(food.per100);
 }
 
+function isProtectedOilName(name){
+  return /olio|oil|burro|butter/i.test(name||'');
+}
+
+function doseStateFor(idx, dose){
+  if(!doseAdjustState[idx]){
+    doseAdjustState[idx] = {
+      grams: null,
+      locked: isProtectedOilName(dose.name)
+    };
+  }
+  return doseAdjustState[idx];
+}
+
 function suggestDoses(){
   const type = $('mealType').value;
   const target = mealTargetFor(type);
@@ -788,7 +805,7 @@ function suggestDoses(){
   };
 
   // start from sane bases
-  let doses = meal.map(f=>{
+  let doses = meal.map((f, idx)=>{
     let base = 100;
     const dom = dominant(f.per100);
     if(dom==='protein') base=200;
@@ -797,92 +814,85 @@ function suggestDoses(){
     if(/olio|burro/i.test(f.name)) base=15;
     const minG = floorFor(f);
     const maxG = capFor(f);
-    return { ...f, grams: clamp(base, minG, maxG), minG, maxG };
+    const rowState = doseStateFor(idx, f);
+    const startGrams = rowState.grams==null ? base : Number(rowState.grams);
+    return { ...f, grams: clamp(startGrams, minG, maxG), minG, maxG, locked: !!rowState.locked, startGrams: clamp(startGrams, minG, maxG) };
   });
 
-  // helper: current macros
+  const W = { kcal: 6, protein: 3, carbs: 2, fat: 1 };
+  const objective = (tot)=> (
+    W.kcal * Math.abs(tot.kcal - target.kcal) +
+    W.protein * Math.abs(tot.protein - target.protein) +
+    W.carbs * Math.abs(tot.carbs - target.carbs) +
+    W.fat * Math.abs(tot.fat - target.fat)
+  );
+
   const cur = () => sumMacros(doses.map(d=>macrosForGrams(d.per100, d.grams)));
 
-  // iterative fill deficits
-  function fill(macroKey){
-    const field = macroKey;
+  let constrainedApprox = false;
+  const maxIters = 24;
+  for(let i=0;i<maxIters;i++){
     const totals = cur();
-    let deficit = target[field] - totals[field];
-    if(deficit <= 0.5) return;
+    const deficits = {
+      kcal: target.kcal - totals.kcal,
+      protein: target.protein - totals.protein,
+      carbs: target.carbs - totals.carbs,
+      fat: target.fat - totals.fat
+    };
 
-    // best density for that macro
-    const best = doses
-      .filter(d=> (d.per100[field]||0) > 0 && d.grams < d.maxG)
-      .sort((a,b)=> (b.per100[field]||0) - (a.per100[field]||0))[0];
-    if(!best) return;
+    const focus = ['kcal','protein','carbs','fat']
+      .sort((a,b)=>Math.abs(deficits[b])*W[b]-Math.abs(deficits[a])*W[a])[0];
 
-    const perG = (best.per100[field]||0)/100;
-    if(perG<=0) return;
-    const room = Math.max(0, best.maxG - best.grams);
-    const addG = clamp(deficit/perG, 0, Math.min(90, room));
-    best.grams = clamp(best.grams + addG, best.minG, best.maxG);
-  }
+    const tryPick = (allowOils)=>{
+      const baseObjective = objective(totals);
+      const candidates = [];
 
-  for(let i=0;i<7;i++){
-    fill('protein');
-    fill('carbs');
-    fill('fat');
-  }
+      for(const d of doses){
+        if(d.locked) continue;
+        const cat = classifyIngredient(d);
+        const isOil = isProtectedOilName(d.name);
+        if(isOil && !allowOils) continue;
 
-  // kcal guardrail: if proposal is >105% of target, scale non-oil items down to target kcal
-  const nonOil = doses.filter((d)=>!isOilOrButter(d.name));
-  const fixedOilKcal = doses
-    .filter((d)=>isOilOrButter(d.name))
-    .reduce((s,d)=>s+macrosForGrams(d.per100,d.grams).kcal, 0);
+        const step = isOil ? 5 : 10;
+        const direction = deficits[focus] >= 0 ? 1 : -1;
+        const roomUp = d.maxG - d.grams;
+        const roomDown = d.grams - d.minG;
+        if((direction > 0 && roomUp < step) || (direction < 0 && roomDown < step)) continue;
 
-  let totals = cur();
-  if(nonOil.length && totals.kcal > target.kcal*1.05){
-    const nonOilKcal = nonOil.reduce((s,d)=>s+macrosForGrams(d.per100,d.grams).kcal, 0);
-    const allowedForNonOil = Math.max(0, target.kcal - fixedOilKcal);
-    if(nonOilKcal > 0){
-      const factor = clamp(allowedForNonOil / nonOilKcal, 0, 1);
-      nonOil.forEach((d)=>{ d.grams = Math.max(0, d.grams * factor); });
+        if(cat==='vegetable' && Math.abs((d.grams + direction*step) - d.startGrams) > 40) continue;
+
+        const ng = clamp(d.grams + direction*step, d.minG, d.maxG);
+        if(Math.abs(ng - d.grams) < 0.1) continue;
+
+        const prev = d.grams;
+        d.grams = ng;
+        const nextTotals = cur();
+        d.grams = prev;
+
+        const density = (d.per100[focus]||0)/100;
+        const improvement = baseObjective - objective(nextTotals);
+        let priority = 0;
+        if(focus==='carbs' && cat==='carb') priority = 0.2;
+        if(focus==='protein' && cat==='protein') priority = 0.2;
+        if(focus==='kcal' && (cat==='carb' || cat==='protein')) priority = 0.1;
+        if(isOil) priority -= 0.5;
+
+        candidates.push({ d, ng, score: improvement + density*0.01 + priority });
+      }
+
+      candidates.sort((a,b)=>b.score-a.score);
+      return candidates[0];
+    };
+
+    let pick = tryPick(false);
+    if(!pick){
+      pick = tryPick(true);
     }
-
-    totals = cur();
-    // final trim in case of tiny overage
-    let guard = 0;
-    while(totals.kcal > target.kcal + 0.5 && guard < 500){
-      const candidate = nonOil
-        .filter((d)=>d.grams > 1)
-        .sort((a,b)=>((b.per100.kcal||0) - (a.per100.kcal||0)))[0];
-      if(!candidate) break;
-      candidate.grams -= 1;
-      totals = cur();
-      guard++;
+    if(!pick || pick.score <= 0){
+      constrainedApprox = true;
+      break;
     }
-  }
-
-  // small re-balance: recover protein minimum (meal protein target) without breaking kcal
-  totals = cur();
-  let proteinDeficit = target.protein - totals.protein;
-  if(proteinDeficit > 0.5 && totals.kcal < target.kcal){
-    const proteinItems = doses
-      .filter((d)=>classifyIngredient(d)==='protein' && (d.per100.protein||0) > 0 && d.grams < d.maxG)
-      .sort((a,b)=>(b.per100.protein||0)-(a.per100.protein||0));
-
-    for(const item of proteinItems){
-      if(proteinDeficit <= 0.5) break;
-      totals = cur();
-      const kcalBudget = target.kcal - totals.kcal;
-      if(kcalBudget <= 0.5) break;
-
-      const pPerG = (item.per100.protein||0)/100;
-      const kPerG = Math.max((item.per100.kcal||0)/100, 0.001);
-      const room = Math.max(0, item.maxG - item.grams);
-      const byProtein = proteinDeficit / pPerG;
-      const byKcal = kcalBudget / kPerG;
-      const add = clamp(Math.min(byProtein, byKcal), 0, room);
-      if(add <= 0) continue;
-      item.grams += add;
-      totals = cur();
-      proteinDeficit = target.protein - totals.protein;
-    }
+    pick.d.grams = pick.ng;
   }
 
   // round + clamp
@@ -894,7 +904,7 @@ function suggestDoses(){
     return { ...d, grams:g };
   });
 
-  totals = cur();
+  let totals = cur();
   if(totals.kcal > target.kcal){
     let guard = 0;
     while(totals.kcal > target.kcal + 0.5 && guard < 300){
@@ -908,7 +918,20 @@ function suggestDoses(){
     }
   }
 
-  return doses;
+  totals = cur();
+  const kcalDevPct = Math.abs(totals.kcal-target.kcal)/Math.max(target.kcal,1)*100;
+  const pDevPct = Math.abs(totals.protein-target.protein)/Math.max(target.protein,1)*100;
+  const cDevPct = Math.abs(totals.carbs-target.carbs)/Math.max(target.carbs,1)*100;
+  const fDevPct = Math.abs(totals.fat-target.fat)/Math.max(target.fat,1)*100;
+  if(kcalDevPct>7 || pDevPct>18 || cDevPct>18 || fDevPct>25) constrainedApprox = true;
+
+  doses.forEach((d, idx)=>{
+    const rowState = doseStateFor(idx, d);
+    rowState.grams = d.grams;
+    rowState.locked = !!d.locked;
+  });
+
+  return { doses, totals, target, constrainedApprox };
 }
 
 /* ---------------------------
@@ -1015,6 +1038,8 @@ function renderMeal(){
     $('mF').textContent = '—';
     $('mFi').textContent = '—';
     $('mealKcalDebug').textContent = '—';
+    $('mealTargetsLine').textContent = '—';
+    $('mealConstraintNote').textContent = '';
     return;
   }
 
@@ -1036,15 +1061,23 @@ function renderMeal(){
     </div>
   `).join('');
 
-  const doses = suggestDoses();
-  const macroItems = doses.map(d=> macrosForGrams(d.per100, d.grams));
-  const totals = sumMacros(macroItems);
+  const solved = suggestDoses();
+  const doses = solved.doses;
+  const totals = solved.totals;
   const score = weightedScore(doses);
 
-  $('doseTable').innerHTML = doses.map(d=>`
+  $('doseTable').innerHTML = doses.map((d,idx)=>`
     <tr>
       <td>${escapeHtml(d.name)}</td>
-      <td>${r1(d.grams)} g</td>
+      <td>
+        <div style="display:flex; gap:8px; align-items:center; justify-content:flex-end;">
+          <input style="width:86px; text-align:right;" type="number" min="0" step="5" value="${r1(d.grams)}"
+            onchange="setDoseGrams(${idx}, this.value)" />
+          <label style="margin:0; display:flex; align-items:center; gap:4px; font-size:12px; color:var(--muted);">
+            <input type="checkbox" ${d.locked ? 'checked' : ''} onchange="setDoseLock(${idx}, this.checked)" /> lock
+          </label>
+        </div>
+      </td>
     </tr>
   `).join('');
 
@@ -1054,6 +1087,9 @@ function renderMeal(){
   $('mF').textContent = `${r1(totals.fat)} g`;
   $('mFi').textContent = `${r01(totals.fiber)} g`;
   $('mealKcalDebug').textContent = `Target pasto: ${r1(mt.kcal)} kcal • Proposto: ${r1(totals.kcal)} kcal`;
+  const dev = (cur, tgt)=>((cur-tgt)/Math.max(tgt,1))*100;
+  $('mealTargetsLine').textContent = `Target K/P/C/F: ${r1(solved.target.kcal)} / ${r1(solved.target.protein)} / ${r1(solved.target.carbs)} / ${r1(solved.target.fat)} • Corrente: ${r1(totals.kcal)} / ${r1(totals.protein)} / ${r1(totals.carbs)} / ${r1(totals.fat)} • Dev%: kcal ${r1(dev(totals.kcal, solved.target.kcal))}% · P ${r1(dev(totals.protein, solved.target.protein))}% · C ${r1(dev(totals.carbs, solved.target.carbs))}% · F ${r1(dev(totals.fat, solved.target.fat))}%`;
+  $('mealConstraintNote').textContent = solved.constrainedApprox ? 'Vincoli troppo stretti: risultato approssimato' : '';
 
   $('mealScore').textContent = `${r01(score)}/10`;
   const pct = clamp(((score-1)/9)*100, 0, 100);
@@ -1072,10 +1108,25 @@ function renderAll(){
 ---------------------------- */
 window.removeMealItem = function(idx){
   meal.splice(idx,1);
+  doseAdjustState = {};
   renderMeal();
 }
 window.setFoodScore = function(idx, v){
   meal[idx].score = clamp(Number(v)||5, 1, 10);
+  renderMeal();
+}
+window.setDoseLock = function(idx, isLocked){
+  const st = doseStateFor(idx, meal[idx]||{name:''});
+  st.locked = !!isLocked;
+  renderMeal();
+}
+window.setDoseGrams = function(idx, v){
+  const d = meal[idx];
+  if(!d) return;
+  const maxG = classifyIngredient(d)==='fat' ? 25 : classifyIngredient(d)==='carb' ? 180 : classifyIngredient(d)==='protein' ? 250 : classifyIngredient(d)==='vegetable' ? 300 : 250;
+  const st = doseStateFor(idx, d);
+  st.grams = clamp(Number(v)||0, 0, maxG);
+  st.locked = true;
   renderMeal();
 }
 window.removeEntry = function(id){
@@ -1093,6 +1144,7 @@ $('btnReset').addEventListener('click', ()=>{
 
 $('btnClearMeal').addEventListener('click', ()=>{
   meal = [];
+  doseAdjustState = {};
   renderMeal();
 });
 
@@ -1183,6 +1235,7 @@ window.addResult = function(idx){
   const r = window.__lastResults[idx];
   if(!r) return;
   meal.push(r);
+  doseAdjustState = {};
   renderMeal();
 }
 
@@ -1239,13 +1292,14 @@ window.saveCustomFood = async function(key){
   window.__lastResults = window.__lastResults || [];
   window.__lastResults.unshift(customFood);
   meal.push(customFood);
+  doseAdjustState = {};
   renderMeal();
   $('results').innerHTML = `<div class="muted">Alimento personalizzato salvato: <b>${escapeHtml(name)}</b>. Ora è ricercabile e aggiunto al pasto corrente.</div>`;
 }
 
 $('btnLog').addEventListener('click', ()=>{
   if(!meal.length) return alert('Aggiungi almeno un alimento al pasto.');
-  const doses = suggestDoses();
+  const doses = suggestDoses().doses;
 
   const items = doses.map(d=>{
     const m = macrosForGrams(d.per100, d.grams);

@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Diet Planner - DB Reset</title>
+  <style>
+    body{font-family:Arial,sans-serif;max-width:900px;margin:24px auto;padding:0 16px}
+    input,button{padding:8px 10px;font-size:16px}
+    ul{padding-left:20px}
+    code{background:#f3f3f3;padding:2px 6px;border-radius:4px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0}
+    .warn{color:#7a4a00}
+  </style>
+</head>
+<body>
+  <h1>Diet Planner</h1>
+  <p>Fonte dati unica: <code>elenco_cibo_bda.json</code>.</p>
+  <p id="meta">Caricamento DB...</p>
+  <div id="fileMode" style="display:none">
+    <p class="warn">Modalità <code>file://</code>: per vincolo browser (Edge/Chrome), seleziona manualmente <code>elenco_cibo_bda.json</code>.</p>
+    <div class="row">
+      <input id="dbFile" type="file" accept="application/json,.json" />
+      <button id="loadFileBtn">Carica DB</button>
+    </div>
+  </div>
+
+  <div class="row">
+    <input id="q" type="text" placeholder="Cerca (es. pasta)" />
+    <button id="searchBtn">Cerca</button>
+  </div>
+  <ul id="results"></ul>
+
+  <script type="module">
+    import { loadDb, getDbMeta, search } from './db.js';
+
+    const metaEl = document.getElementById('meta');
+    const qEl = document.getElementById('q');
+    const resultEl = document.getElementById('results');
+    const fileModeEl = document.getElementById('fileMode');
+    const dbFileEl = document.getElementById('dbFile');
+
+    function showMeta() {
+      const meta = getDbMeta();
+      metaEl.textContent = `source=${meta.source} | items=${meta.items} | bytes=${meta.bytes} | hash=${meta.hash} | timestamp=${meta.timestamp}`;
+    }
+
+    async function bootstrapDb() {
+      if (location.protocol === 'file:') {
+        metaEl.textContent = 'In attesa di caricamento manuale di elenco_cibo_bda.json';
+        fileModeEl.style.display = 'block';
+        return;
+      }
+
+      await loadDb({ source: './elenco_cibo_bda.json' });
+      showMeta();
+    }
+
+    async function loadFromChosenFile() {
+      const file = dbFileEl.files?.[0];
+      if (!file) {
+        metaEl.textContent = 'Seleziona il file elenco_cibo_bda.json';
+        return;
+      }
+      if (file.name !== 'elenco_cibo_bda.json') {
+        metaEl.textContent = 'File non valido: devi selezionare esattamente elenco_cibo_bda.json';
+        return;
+      }
+
+      const rawText = await file.text();
+      await loadDb({ source: file.name, rawText });
+      showMeta();
+    }
+
+    async function runSearch() {
+      const rows = await search(qEl.value);
+      resultEl.innerHTML = rows.slice(0, 30).map((item) => `<li>${item.name}</li>`).join('') || '<li>Nessun risultato</li>';
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', async () => {
+      try {
+        await runSearch();
+      } catch (error) {
+        metaEl.textContent = `ERRORE: ${error.message}`;
+      }
+    });
+
+    document.getElementById('loadFileBtn').addEventListener('click', async () => {
+      try {
+        await loadFromChosenFile();
+      } catch (error) {
+        metaEl.textContent = `ERRORE: ${error.message}`;
+      }
+    });
+
+    qEl.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') document.getElementById('searchBtn').click();
+    });
+
+    bootstrapDb().catch((error) => {
+      metaEl.textContent = `ERRORE: ${error.message}`;
+    });
+  </script>
+</body>
+</html>

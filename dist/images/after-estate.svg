@@ -1,72 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Restored rural stone luxury estate with discreet landing area after intervention">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Photographic restored stone countryside house in a mountainous landscape after intervention">
+  <!-- Photo source: https://unsplash.com/photos/a-stone-house-with-mountains-in-the-background-6xdlgWyIFVU by Slim MARS; loaded remotely to keep the PR text-only/no binary assets. -->
   <defs>
-    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop stop-color="#20343b"/>
-      <stop offset="0.5" stop-color="#b8794a"/>
-      <stop offset="1" stop-color="#edc987"/>
+    <clipPath id="frame"><rect width="1600" height="1000" rx="0"/></clipPath>
+    <linearGradient id="grade" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#050504" stop-opacity="0.34"/>
+      <stop offset="0.42" stop-color="#2f1d12" stop-opacity="0.05"/>
+      <stop offset="1" stop-color="#050504" stop-opacity="0.52"/>
     </linearGradient>
-    <radialGradient id="sun" cx="72%" cy="24%" r="38%">
-      <stop stop-color="#fff4c8" stop-opacity="0.92"/>
-      <stop offset="0.22" stop-color="#e3a861" stop-opacity="0.42"/>
+    <radialGradient id="warm" cx="68%" cy="26%" r="55%">
+      <stop stop-color="#ffd88a" stop-opacity="0.28"/>
+      <stop offset="0.42" stop-color="#b47641" stop-opacity="0.11"/>
       <stop offset="1" stop-color="#000" stop-opacity="0"/>
     </radialGradient>
-    <linearGradient id="restoredStone" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#d3c2a3"/>
-      <stop offset="0.45" stop-color="#998a74"/>
-      <stop offset="1" stop-color="#4a3b2d"/>
-    </linearGradient>
-    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#262f34" stop-opacity="0.9"/>
-      <stop offset="0.5" stop-color="#ffd68f" stop-opacity="0.72"/>
-      <stop offset="1" stop-color="#fff0c1" stop-opacity="0.86"/>
-    </linearGradient>
-    <filter id="softBlur"><feGaussianBlur stdDeviation="22"/></filter>
-    <filter id="photoGrain">
-      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="5" seed="17"/>
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.78" numOctaves="4" seed="27"/>
       <feColorMatrix type="saturate" values="0"/>
-      <feComponentTransfer><feFuncA type="table" tableValues="0 0.16"/></feComponentTransfer>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0.11"/></feComponentTransfer>
     </filter>
-    <filter id="terrainWarp">
-      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="8"/>
-      <feDisplacementMap in="SourceGraphic" scale="13"/>
-    </filter>
-    <filter id="stoneNoise">
-      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="5" seed="42"/>
-      <feColorMatrix type="matrix" values="0.42 0 0 0 0.2 0 0.4 0 0 0.18 0 0 0.34 0 0.15 0 0 0 0.3 0"/>
-      <feBlend in="SourceGraphic" mode="multiply"/>
-    </filter>
-    <linearGradient id="vignette" x1="0" y1="0" x2="1" y2="1">
-      <stop stop-color="#000" stop-opacity="0.38"/>
-      <stop offset="0.5" stop-color="#000" stop-opacity="0"/>
-      <stop offset="1" stop-color="#000" stop-opacity="0.5"/>
-    </linearGradient>
   </defs>
-  <rect width="1600" height="1000" fill="url(#sky)"/>
-  <rect width="1600" height="1000" fill="url(#sun)"/>
-  <circle cx="1160" cy="225" r="105" fill="#ffd98b" opacity="0.4" filter="url(#softBlur)"/>
-  <path d="M0 378 C210 302 420 356 650 276 C902 188 1128 252 1600 132 L1600 1000 L0 1000Z" fill="#151713" opacity="0.38"/>
-  <path d="M0 738 C250 644 468 664 705 535 C930 414 1136 462 1600 286" fill="#332517" opacity="0.86" filter="url(#terrainWarp)"/>
-  <path d="M0 812 C250 742 500 764 760 680 C1010 598 1265 628 1600 514 L1600 1000 L0 1000Z" fill="#11100c" opacity="0.76"/>
-  <g opacity="0.3" fill="#1b1912">
-    <path d="M80 762 l22 -92 l22 92z"/><path d="M172 754 l19 -84 l19 84z"/><path d="M266 763 l23 -96 l23 96z"/><path d="M362 761 l20 -90 l20 90z"/><path d="M455 756 l22 -88 l22 88z"/><path d="M1110 760 l19 -82 l19 82z"/><path d="M1210 762 l24 -94 l24 94z"/><path d="M1320 758 l21 -88 l21 88z"/><path d="M1422 764 l22 -92 l22 92z"/>
+  <g clip-path="url(#frame)">
+    <image href="https://source.unsplash.com/6xdlgWyIFVU/1600x1000" x="0" y="0" width="1600" height="1000" preserveAspectRatio="xMidYMid slice"/>
+    <rect width="1600" height="1000" fill="#2a180d" opacity="0.16"/>
+    <rect width="1600" height="1000" fill="url(#warm)"/>
+    <rect width="1600" height="1000" fill="url(#grade)"/>
+    <rect width="1600" height="1000" filter="url(#grain)" opacity="0.85"/>
   </g>
-  <ellipse cx="710" cy="723" rx="360" ry="66" fill="#080705" opacity="0.42"/>
-  <g filter="url(#stoneNoise)">
-    <path d="M480 704 L760 520 L1050 704 Z" fill="#4b2b1d"/>
-    <path d="M590 704 V548 L760 462 L980 575 V704 Z" fill="url(#restoredStone)"/>
-    <path d="M590 704 H1000" stroke="#ead0a1" stroke-opacity="0.42" stroke-width="4"/>
-    <path d="M640 670 h116 v-92 h-116z" fill="url(#glass)"/>
-    <path d="M800 658 h142 v-104 h-142z" fill="url(#glass)"/>
-    <path d="M792 506 h168 l18 48 h-180z" fill="#17252d" opacity="0.88"/>
-    <g fill="#f4ddad" opacity="0.34"><circle cx="630" cy="604" r="5"/><circle cx="704" cy="644" r="4"/><circle cx="875" cy="610" r="6"/><circle cx="928" cy="655" r="4"/></g>
-  </g>
-  <ellipse cx="1180" cy="712" rx="210" ry="58" fill="#080806" opacity="0.52"/>
-  <ellipse cx="1180" cy="712" rx="178" ry="44" fill="none" stroke="#d6bd83" stroke-opacity="0.32" stroke-width="7"/>
-  <path d="M1015 694 C1090 652 1248 652 1324 694" fill="none" stroke="#d9b66f" stroke-width="8" stroke-linecap="round" opacity="0.58"/>
-  <path d="M1050 682 h230 l-54 35 h-126z" fill="#efe8dd" opacity="0.86"/>
-  <circle cx="1018" cy="681" r="48" fill="none" stroke="#efe8dd" stroke-width="7" opacity="0.58"/>
-  <circle cx="1326" cy="681" r="48" fill="none" stroke="#efe8dd" stroke-width="7" opacity="0.58"/>
-  <path d="M0 786 C230 720 385 690 520 666 C650 642 820 602 970 554 C1160 492 1330 442 1600 334" fill="none" stroke="#17110c" stroke-width="7" opacity="0.66" filter="url(#terrainWarp)"/>
-  <rect width="1600" height="1000" fill="url(#vignette)" opacity="0.72"/>
-  <rect width="1600" height="1000" filter="url(#photoGrain)" opacity="0.9"/>
 </svg>

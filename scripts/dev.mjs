@@ -1,0 +1,3 @@
+import http from 'node:http';import fs from 'node:fs';import path from 'node:path';
+const root=process.cwd(),port=3000;const types={'.html':'text/html','.css':'text/css','.js':'text/javascript','.svg':'image/svg+xml','.json':'application/json'};
+http.createServer((req,res)=>{let u=decodeURIComponent(req.url.split('?')[0]); if(u==='/' )u='/index.html'; const p=path.join(root,u); if(!p.startsWith(root)){res.writeHead(403).end();return} fs.readFile(p,(e,d)=>{if(e){res.writeHead(404).end('Not found');return} res.writeHead(200,{'Content-Type':types[path.extname(p)]||'application/octet-stream'});res.end(d)})}).listen(port,()=>console.log(`ALTIORA ESTATES dev server http://localhost:${port}`));

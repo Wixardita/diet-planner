@@ -1,67 +1,28 @@
-# diet-planner (DB hard reset)
+# ALTIORA ESTATES
 
-Architettura minima con **una sola pipeline DB** e **una sola fonte dati**:
+A production-ready Next.js landing page for a luxury real estate venture defining **flight-access luxury estates**.
 
-- Dataset canonico: `elenco_cibo_bda.json`
-- Modulo unico DB: `db.js`
-- API pubblica: `loadDb()`, `getDbMeta()`, `search(query)`
-
-## Avvio progetto
-
-### Modalità 1 — doppio click (`file://`) senza server
-
-1. Apri `app.html` con doppio click.
-2. Seleziona manualmente **esattamente** `elenco_cibo_bda.json` dal picker file.
-3. Esegui le ricerche.
-
-> In `file://` non usiamo `fetch/XHR` sul JSON (bloccato da Edge/Chrome): il file viene letto tramite File API locale.
-
-### Modalità 2 — server locale (`http://`)
-
-1. Assicurati che esista `elenco_cibo_bda.json` in root.
-2. Avvia un server statico dalla root:
+## Run locally
 
 ```bash
-python -m http.server 8000
+npm install
+npm run dev
 ```
 
-3. Apri `http://localhost:8000/app.html`.
-
-## Rigenerazione DB (fonte ufficiale BDA)
+## Build
 
 ```bash
-node build_bda_db.mjs
+npm run build
 ```
 
-Questo script scarica dal portale BDA ufficiale (`bda.ieo.it`) e genera **solo** `elenco_cibo_bda.json`.
+## Publish
 
-## Diagnostica obbligatoria al load
+Deploy the repository to Vercel or any Next.js-compatible host. Configure `NEXT_PUBLIC_CONTACT_ENDPOINT` only when a real contact backend is available; otherwise the form adapter simulates success locally.
 
-`loadDb()` stampa sempre:
+## Key files
 
-- `source`
-- `items`
-- `bytes`
-- `hash`
-- `timestamp`
-
-## Nota `file://` vs `http://`
-
-Stessa fonte dati in entrambi i casi: `elenco_cibo_bda.json`.
-Differenza tecnica esplicita:
-
-- `http://` → load automatico via `fetch`;
-- `file://` → load manuale via File API (no fetch/XHR).
-
-Non esistono fallback, cache secondarie o dataset alternativi.
-
-## Test
-
-```bash
-node test_db.mjs
-```
-
-Copre:
-
-- mock minimo (`pasta`/`pollo`)
-- dataset reale (`pasta`)
+- `app/page.tsx` — complete landing page sections.
+- `content/translations.ts` — EN/IT-ready copy and structured content.
+- `lib/formAdapter.ts` — swappable contact submission adapter.
+- `public/images` — local SVG visual placeholders ready for replacement.
+- `public/brand` — logo, dark logo, monogram and favicon SVG assets.

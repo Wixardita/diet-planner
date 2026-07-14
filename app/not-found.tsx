@@ -1,0 +1,1 @@
+export default function NotFound(){return <main className="section" style={{minHeight:"100svh",display:"grid",placeItems:"center"}}><div><p className="eyebrow">404</p><h1 className="title serif">The route is beyond roads.</h1><p className="lead">This page does not exist.</p><a className="btn primary" href="/">Return home</a></div></main>}

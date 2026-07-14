@@ -1,1 +1,64 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="BEFORE"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#25150f"/><stop offset=".42" stop-color="#a9673f"/><stop offset=".72" stop-color="#e7bc7b"/><stop offset="1" stop-color="#372012"/></linearGradient><radialGradient id="sun" cx="72%" cy="26%" r="45%"><stop stop-color="#fff1bc" stop-opacity=".85"/><stop offset=".25" stop-color="#d9a15e" stop-opacity=".38"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient><linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9c3a0"/><stop offset=".45" stop-color="#8d7459"/><stop offset="1" stop-color="#302319"/></linearGradient><filter id="soft"><feGaussianBlur stdDeviation="18"/></filter><filter id="grain"><feTurbulence baseFrequency=".9" numOctaves="4" seed="7"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .16"/></feComponentTransfer></filter><filter id="photo"><feTurbulence type="fractalNoise" baseFrequency=".015" numOctaves="5" seed="12"/><feDisplacementMap in="SourceGraphic" scale="10"/></filter></defs><rect width="1600" height="1000" fill="url(#sky)"/><rect width="1600" height="1000" fill="url(#sun)"/><circle cx="1160" cy="245" r="120" fill="#ffd98b" opacity=".42" filter="url(#soft)"/><path d="M0 390 C230 310 420 360 620 290 C900 190 1120 260 1600 135 L1600 1000 L0 1000Z" fill="#17130f" opacity=".42"/><path d="M0 760 C300 650 520 680 770 560 C1020 440 1280 480 1600 330" fill="#24180f" opacity=".9" filter="url(#photo)"/><path d="M0 825 C300 750 520 760 760 680 C1020 590 1280 640 1600 520 L1600 1000 L0 1000Z" fill="#0c0a07" opacity=".72"/><g opacity=".34"><path d="M80 760 l20 -90 l20 90z" fill="#191008"/><path d="M175 760 l20 -90 l20 90z" fill="#191008"/><path d="M270 760 l20 -90 l20 90z" fill="#191008"/><path d="M365 760 l20 -90 l20 90z" fill="#191008"/><path d="M460 760 l20 -90 l20 90z" fill="#191008"/><path d="M555 760 l20 -90 l20 90z" fill="#191008"/><path d="M650 760 l20 -90 l20 90z" fill="#191008"/><path d="M745 760 l20 -90 l20 90z" fill="#191008"/><path d="M840 760 l20 -90 l20 90z" fill="#191008"/><path d="M935 760 l20 -90 l20 90z" fill="#191008"/><path d="M1030 760 l20 -90 l20 90z" fill="#191008"/><path d="M1125 760 l20 -90 l20 90z" fill="#191008"/><path d="M1220 760 l20 -90 l20 90z" fill="#191008"/><path d="M1315 760 l20 -90 l20 90z" fill="#191008"/><path d="M1410 760 l20 -90 l20 90z" fill="#191008"/></g><g transform="translate(0 8)"><path d="M540 715 L690 590 L840 715 Z" fill="#3b2115"/><path d="M590 700 V575 L765 486 L980 590 V700 Z" fill="url(#stone)"/><path d="M650 662 h92 v-72 h-92z M800 655 h110 v-82 h-110z" fill="#ffd98b" opacity=".62"/><path d="M590 700 H1000" stroke="#f1d19a" stroke-opacity=".35" stroke-width="2"/><g fill="#f1ddbd" opacity=".28"><circle cx="635" cy="605" r="5"/><circle cx="700" cy="640" r="4"/><circle cx="875" cy="610" r="6"/><circle cx="925" cy="655" r="4"/></g></g><ellipse cx="1115" cy="706" rx="170" ry="42" fill="#070604" opacity=".48"/><path d="M970 690 C1050 655 1170 655 1250 690" stroke="#d9b66f" stroke-width="8" stroke-linecap="round" opacity=".45"/><path d="M1010 680 h210 l-48 32 h-115z" fill="#efe7dc" opacity=".78"/><circle cx="985" cy="675" r="44" fill="none" stroke="#efe7dc" stroke-width="7" opacity=".5"/><circle cx="1248" cy="675" r="44" fill="none" stroke="#efe7dc" stroke-width="7" opacity=".5"/><text x="78" y="118" fill="#fff2df" font-family="Georgia,serif" font-size="48" letter-spacing="9" opacity=".92">BEFORE</text><text x="82" y="174" fill="#f5c982" font-family="Arial,sans-serif" font-size="17" letter-spacing="5" opacity=".88">quiet ruin in warm hillside light</text><rect width="1600" height="1000" fill="url(#sun)" opacity=".25"/><rect width="1600" height="1000" filter="url(#grain)" opacity=".75"/><rect width="1600" height="1000" fill="none" stroke="#f2d6a6" stroke-opacity=".08" stroke-width="18"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Abandoned rural stone ruin in remote Italian highland landscape before restoration">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#223239"/>
+      <stop offset="0.5" stop-color="#b27147"/>
+      <stop offset="1" stop-color="#e2b879"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="72%" cy="24%" r="38%">
+      <stop stop-color="#fff1c4" stop-opacity="0.86"/>
+      <stop offset="0.22" stop-color="#e0a45e" stop-opacity="0.36"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="ruinStone" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8a816c"/>
+      <stop offset="0.42" stop-color="#5e5547"/>
+      <stop offset="1" stop-color="#2f2a23"/>
+    </linearGradient>
+    <filter id="softBlur"><feGaussianBlur stdDeviation="22"/></filter>
+    <filter id="photoGrain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="5" seed="17"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0.18"/></feComponentTransfer>
+    </filter>
+    <filter id="terrainWarp">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="8"/>
+      <feDisplacementMap in="SourceGraphic" scale="13"/>
+    </filter>
+    <filter id="stoneNoise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="5" seed="31"/>
+      <feColorMatrix type="matrix" values="0.5 0 0 0 0.16 0 0.48 0 0 0.14 0 0 0.4 0 0.12 0 0 0 0.34 0"/>
+      <feBlend in="SourceGraphic" mode="multiply"/>
+    </filter>
+    <linearGradient id="vignette" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#000" stop-opacity="0.42"/>
+      <stop offset="0.5" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.56"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <rect width="1600" height="1000" fill="url(#sun)"/>
+  <circle cx="1160" cy="225" r="105" fill="#ffd58a" opacity="0.34" filter="url(#softBlur)"/>
+  <path d="M0 378 C210 302 420 356 650 276 C902 188 1128 252 1600 132 L1600 1000 L0 1000Z" fill="#151713" opacity="0.42"/>
+  <path d="M0 725 C244 640 420 684 630 590 C872 482 1112 486 1600 318" fill="#34281b" opacity="0.88" filter="url(#terrainWarp)"/>
+  <path d="M0 812 C250 742 500 764 760 680 C1010 598 1265 628 1600 514 L1600 1000 L0 1000Z" fill="#11100c" opacity="0.78"/>
+  <g opacity="0.36" fill="#1b1912">
+    <path d="M80 762 l22 -92 l22 92z"/><path d="M172 754 l19 -84 l19 84z"/><path d="M266 763 l23 -96 l23 96z"/><path d="M362 761 l20 -90 l20 90z"/><path d="M455 756 l22 -88 l22 88z"/><path d="M548 765 l22 -92 l22 92z"/><path d="M1110 760 l19 -82 l19 82z"/><path d="M1210 762 l24 -94 l24 94z"/><path d="M1320 758 l21 -88 l21 88z"/><path d="M1422 764 l22 -92 l22 92z"/>
+  </g>
+  <ellipse cx="705" cy="722" rx="330" ry="62" fill="#080705" opacity="0.46"/>
+  <g filter="url(#stoneNoise)">
+    <path d="M510 706 L636 570 L748 704 Z" fill="#4a2c20"/>
+    <path d="M590 704 V586 L680 536 L760 594 V704 Z" fill="url(#ruinStone)"/>
+    <path d="M760 704 V626 L838 600 L925 640 V704 Z" fill="#635747" opacity="0.9"/>
+    <path d="M604 704 L604 622 L655 608 L655 704 Z" fill="#221b16" opacity="0.82"/>
+    <path d="M797 704 L797 642 L857 635 L857 704 Z" fill="#1d1713" opacity="0.86"/>
+    <path d="M589 585 L680 535 L768 600" fill="none" stroke="#b6a17f" stroke-opacity="0.42" stroke-width="5"/>
+    <path d="M570 708 C640 686 732 698 835 690 C900 684 958 706 1028 728" fill="none" stroke="#6c5c45" stroke-width="34" stroke-linecap="round" opacity="0.72"/>
+  </g>
+  <g fill="#9a8c70" opacity="0.62">
+    <circle cx="548" cy="700" r="9"/><circle cx="617" cy="724" r="6"/><circle cx="690" cy="715" r="12"/><circle cx="745" cy="735" r="7"/><circle cx="824" cy="712" r="10"/><circle cx="895" cy="728" r="8"/>
+  </g>
+  <path d="M0 786 C230 720 385 690 520 666 C650 642 820 602 970 554 C1160 492 1330 442 1600 334" fill="none" stroke="#17110c" stroke-width="9" opacity="0.72" filter="url(#terrainWarp)"/>
+  <rect width="1600" height="1000" fill="url(#vignette)" opacity="0.78"/>
+  <rect width="1600" height="1000" filter="url(#photoGrain)" opacity="0.95"/>
+</svg>

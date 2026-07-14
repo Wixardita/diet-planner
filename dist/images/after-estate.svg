@@ -1,1 +1,72 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="AFTER"><defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#25150f"/><stop offset=".42" stop-color="#a9673f"/><stop offset=".72" stop-color="#e7bc7b"/><stop offset="1" stop-color="#372012"/></linearGradient><radialGradient id="sun" cx="72%" cy="26%" r="45%"><stop stop-color="#fff1bc" stop-opacity=".85"/><stop offset=".25" stop-color="#d9a15e" stop-opacity=".38"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient><linearGradient id="stone" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#d9c3a0"/><stop offset=".45" stop-color="#8d7459"/><stop offset="1" stop-color="#302319"/></linearGradient><filter id="soft"><feGaussianBlur stdDeviation="18"/></filter><filter id="grain"><feTurbulence baseFrequency=".9" numOctaves="4" seed="7"/><feColorMatrix type="saturate" values="0"/><feComponentTransfer><feFuncA type="table" tableValues="0 .16"/></feComponentTransfer></filter><filter id="photo"><feTurbulence type="fractalNoise" baseFrequency=".015" numOctaves="5" seed="12"/><feDisplacementMap in="SourceGraphic" scale="10"/></filter></defs><rect width="1600" height="1000" fill="url(#sky)"/><rect width="1600" height="1000" fill="url(#sun)"/><circle cx="1160" cy="245" r="120" fill="#ffd98b" opacity=".42" filter="url(#soft)"/><path d="M0 390 C230 310 420 360 620 290 C900 190 1120 260 1600 135 L1600 1000 L0 1000Z" fill="#17130f" opacity=".42"/><path d="M0 745 C280 620 520 670 760 520 C1010 360 1220 440 1600 285" fill="#24180f" opacity=".9" filter="url(#photo)"/><path d="M0 825 C300 750 520 760 760 680 C1020 590 1280 640 1600 520 L1600 1000 L0 1000Z" fill="#0c0a07" opacity=".72"/><g opacity=".34"><path d="M80 760 l20 -90 l20 90z" fill="#191008"/><path d="M175 760 l20 -90 l20 90z" fill="#191008"/><path d="M270 760 l20 -90 l20 90z" fill="#191008"/><path d="M365 760 l20 -90 l20 90z" fill="#191008"/><path d="M460 760 l20 -90 l20 90z" fill="#191008"/><path d="M555 760 l20 -90 l20 90z" fill="#191008"/><path d="M650 760 l20 -90 l20 90z" fill="#191008"/><path d="M745 760 l20 -90 l20 90z" fill="#191008"/><path d="M840 760 l20 -90 l20 90z" fill="#191008"/><path d="M935 760 l20 -90 l20 90z" fill="#191008"/><path d="M1030 760 l20 -90 l20 90z" fill="#191008"/><path d="M1125 760 l20 -90 l20 90z" fill="#191008"/><path d="M1220 760 l20 -90 l20 90z" fill="#191008"/><path d="M1315 760 l20 -90 l20 90z" fill="#191008"/><path d="M1410 760 l20 -90 l20 90z" fill="#191008"/></g><g transform="translate(0 8)"><path d="M500 700 L760 535 L1040 700 Z" fill="#3b2115"/><path d="M590 700 V575 L765 486 L980 590 V700 Z" fill="url(#stone)"/><path d="M650 662 h92 v-72 h-92z M800 655 h110 v-82 h-110z" fill="#ffd98b" opacity=".62"/><path d="M590 700 H1000" stroke="#f1d19a" stroke-opacity=".35" stroke-width="2"/><g fill="#f1ddbd" opacity=".28"><circle cx="635" cy="605" r="5"/><circle cx="700" cy="640" r="4"/><circle cx="875" cy="610" r="6"/><circle cx="925" cy="655" r="4"/></g></g><ellipse cx="1115" cy="706" rx="170" ry="42" fill="#070604" opacity=".48"/><path d="M970 690 C1050 655 1170 655 1250 690" stroke="#d9b66f" stroke-width="8" stroke-linecap="round" opacity=".45"/><path d="M1010 680 h210 l-48 32 h-115z" fill="#efe7dc" opacity=".78"/><circle cx="985" cy="675" r="44" fill="none" stroke="#efe7dc" stroke-width="7" opacity=".5"/><circle cx="1248" cy="675" r="44" fill="none" stroke="#efe7dc" stroke-width="7" opacity=".5"/><text x="78" y="118" fill="#fff2df" font-family="Georgia,serif" font-size="48" letter-spacing="9" opacity=".92">AFTER</text><text x="82" y="174" fill="#f5c982" font-family="Arial,sans-serif" font-size="17" letter-spacing="5" opacity=".88">restored exclusive stone retreat</text><rect width="1600" height="1000" fill="url(#sun)" opacity=".25"/><rect width="1600" height="1000" filter="url(#grain)" opacity=".75"/><rect width="1600" height="1000" fill="none" stroke="#f2d6a6" stroke-opacity=".08" stroke-width="18"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" role="img" aria-label="Restored rural stone luxury estate with discreet landing area after intervention">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#20343b"/>
+      <stop offset="0.5" stop-color="#b8794a"/>
+      <stop offset="1" stop-color="#edc987"/>
+    </linearGradient>
+    <radialGradient id="sun" cx="72%" cy="24%" r="38%">
+      <stop stop-color="#fff4c8" stop-opacity="0.92"/>
+      <stop offset="0.22" stop-color="#e3a861" stop-opacity="0.42"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="restoredStone" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#d3c2a3"/>
+      <stop offset="0.45" stop-color="#998a74"/>
+      <stop offset="1" stop-color="#4a3b2d"/>
+    </linearGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#262f34" stop-opacity="0.9"/>
+      <stop offset="0.5" stop-color="#ffd68f" stop-opacity="0.72"/>
+      <stop offset="1" stop-color="#fff0c1" stop-opacity="0.86"/>
+    </linearGradient>
+    <filter id="softBlur"><feGaussianBlur stdDeviation="22"/></filter>
+    <filter id="photoGrain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.72" numOctaves="5" seed="17"/>
+      <feColorMatrix type="saturate" values="0"/>
+      <feComponentTransfer><feFuncA type="table" tableValues="0 0.16"/></feComponentTransfer>
+    </filter>
+    <filter id="terrainWarp">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="4" seed="8"/>
+      <feDisplacementMap in="SourceGraphic" scale="13"/>
+    </filter>
+    <filter id="stoneNoise">
+      <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="5" seed="42"/>
+      <feColorMatrix type="matrix" values="0.42 0 0 0 0.2 0 0.4 0 0 0.18 0 0 0.34 0 0.15 0 0 0 0.3 0"/>
+      <feBlend in="SourceGraphic" mode="multiply"/>
+    </filter>
+    <linearGradient id="vignette" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#000" stop-opacity="0.38"/>
+      <stop offset="0.5" stop-color="#000" stop-opacity="0"/>
+      <stop offset="1" stop-color="#000" stop-opacity="0.5"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="1000" fill="url(#sky)"/>
+  <rect width="1600" height="1000" fill="url(#sun)"/>
+  <circle cx="1160" cy="225" r="105" fill="#ffd98b" opacity="0.4" filter="url(#softBlur)"/>
+  <path d="M0 378 C210 302 420 356 650 276 C902 188 1128 252 1600 132 L1600 1000 L0 1000Z" fill="#151713" opacity="0.38"/>
+  <path d="M0 738 C250 644 468 664 705 535 C930 414 1136 462 1600 286" fill="#332517" opacity="0.86" filter="url(#terrainWarp)"/>
+  <path d="M0 812 C250 742 500 764 760 680 C1010 598 1265 628 1600 514 L1600 1000 L0 1000Z" fill="#11100c" opacity="0.76"/>
+  <g opacity="0.3" fill="#1b1912">
+    <path d="M80 762 l22 -92 l22 92z"/><path d="M172 754 l19 -84 l19 84z"/><path d="M266 763 l23 -96 l23 96z"/><path d="M362 761 l20 -90 l20 90z"/><path d="M455 756 l22 -88 l22 88z"/><path d="M1110 760 l19 -82 l19 82z"/><path d="M1210 762 l24 -94 l24 94z"/><path d="M1320 758 l21 -88 l21 88z"/><path d="M1422 764 l22 -92 l22 92z"/>
+  </g>
+  <ellipse cx="710" cy="723" rx="360" ry="66" fill="#080705" opacity="0.42"/>
+  <g filter="url(#stoneNoise)">
+    <path d="M480 704 L760 520 L1050 704 Z" fill="#4b2b1d"/>
+    <path d="M590 704 V548 L760 462 L980 575 V704 Z" fill="url(#restoredStone)"/>
+    <path d="M590 704 H1000" stroke="#ead0a1" stroke-opacity="0.42" stroke-width="4"/>
+    <path d="M640 670 h116 v-92 h-116z" fill="url(#glass)"/>
+    <path d="M800 658 h142 v-104 h-142z" fill="url(#glass)"/>
+    <path d="M792 506 h168 l18 48 h-180z" fill="#17252d" opacity="0.88"/>
+    <g fill="#f4ddad" opacity="0.34"><circle cx="630" cy="604" r="5"/><circle cx="704" cy="644" r="4"/><circle cx="875" cy="610" r="6"/><circle cx="928" cy="655" r="4"/></g>
+  </g>
+  <ellipse cx="1180" cy="712" rx="210" ry="58" fill="#080806" opacity="0.52"/>
+  <ellipse cx="1180" cy="712" rx="178" ry="44" fill="none" stroke="#d6bd83" stroke-opacity="0.32" stroke-width="7"/>
+  <path d="M1015 694 C1090 652 1248 652 1324 694" fill="none" stroke="#d9b66f" stroke-width="8" stroke-linecap="round" opacity="0.58"/>
+  <path d="M1050 682 h230 l-54 35 h-126z" fill="#efe8dd" opacity="0.86"/>
+  <circle cx="1018" cy="681" r="48" fill="none" stroke="#efe8dd" stroke-width="7" opacity="0.58"/>
+  <circle cx="1326" cy="681" r="48" fill="none" stroke="#efe8dd" stroke-width="7" opacity="0.58"/>
+  <path d="M0 786 C230 720 385 690 520 666 C650 642 820 602 970 554 C1160 492 1330 442 1600 334" fill="none" stroke="#17110c" stroke-width="7" opacity="0.66" filter="url(#terrainWarp)"/>
+  <rect width="1600" height="1000" fill="url(#vignette)" opacity="0.72"/>
+  <rect width="1600" height="1000" filter="url(#photoGrain)" opacity="0.9"/>
+</svg>

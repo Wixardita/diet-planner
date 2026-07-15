@@ -3,73 +3,73 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ALTIORA ESTATES — Luxury Beyond Roads</title>
-  <meta name="description" content="Flight-access luxury estates for exceptional remote properties restored for the era of personal flight.">
-  <meta property="og:title" content="ALTIORA ESTATES">
-  <meta property="og:description" content="Luxury Beyond Roads.">
+  <title>ALTIORA ESTATES — The Future Lives Above</title>
+  <meta name="description" content="A visionary ultra-luxury concept exploring restored Italian mountain estates for the age of personal flight.">
+  <meta property="og:title" content="ALTIORA ESTATES — The Future Lives Above">
+  <meta property="og:description" content="Luxury real estate for the age of personal flight.">
   <meta property="og:image" content="/images/hero-altiora.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Cormorant+Garamond:wght@400;500&display=swap" rel="stylesheet">
   <link rel="icon" href="favicon.svg">
   <link rel="stylesheet" href="app/globals.css">
 </head>
 <body>
-  <div class="cursor-glow" aria-hidden="true"></div>
+  <canvas id="mist" aria-hidden="true"></canvas>
   <header class="site-header" id="hdr">
-    <a class="brand" href="#top" aria-label="ALTIORA ESTATES home"><img src="public/brand/monogram-ae.svg" alt="" width="36" height="36"><span>ALTIORA ESTATES</span></a>
-    <nav class="desktop-nav" aria-label="Primary navigation"><a href="#vision">Vision</a><a href="#estates">Estates</a><a href="#model">Model</a><a href="#club">Owners Club</a><a href="#contact">Contact</a><button class="btn ghost" id="lang" type="button">EN / IT</button><a class="btn primary" href="#contact">Request Private Access</a></nav>
-    <button class="mobile-menu-btn btn ghost" id="menuBtn" type="button" aria-controls="menu" aria-expanded="false">Menu</button>
+    <a class="brand" href="#top" aria-label="ALTIORA ESTATES home"><img src="public/brand/monogram-ae.svg" alt="" width="34" height="34"><span>ALTIORA ESTATES</span></a>
+    <nav class="desktop-nav" aria-label="Primary navigation"><a href="#era">Era</a><a href="#italy">Italy</a><a href="#method">Method</a><a href="#club">Club</a><a href="#disclaimer">Disclaimer</a><a class="btn" href="#join">Join the Vision</a></nav>
+    <button class="mobile-menu-btn btn" id="menuBtn" type="button" aria-controls="menu" aria-expanded="false">Menu</button>
   </header>
-  <div class="mobile-panel" id="menu" hidden><button class="btn ghost close" id="close" type="button">Close</button><a href="#vision">Vision</a><a href="#estates">Estates</a><a href="#model">Model</a><a href="#club">Owners Club</a><a href="#contact">Contact</a></div>
+  <div class="mobile-panel" id="menu" hidden><button class="btn close" id="close" type="button">Close</button><a href="#era">Era</a><a href="#italy">Italy</a><a href="#method">Method</a><a href="#club">Club</a><a href="#join">Join</a></div>
 
   <main id="top">
-    <section class="hero section-dark">
-      <img class="hero-image" src="public/images/hero-altiora.svg" alt="Cinematic remote stone estate with personal flight access concept">
-      <div class="hero-orb orb-one"></div><div class="hero-orb orb-two"></div>
-      <div class="hero-content reveal"><p class="eyebrow">ALTIORA ESTATES</p><h1>Luxury<br>Beyond Roads.</h1><p class="lead">We acquire and transform exceptional remote properties into flight-access private estates with conservation, autonomy and service designed as one luxury experience.</p><div class="actions"><a class="btn primary" href="#vision">Explore the Vision</a><a class="btn ghost" href="#contact">Request Private Access</a></div></div>
-      <aside class="hero-stat glass"><span>18 min</span><small>illustrative air transfer versus mountain-road isolation</small></aside><span class="scroll-cue">Scroll</span>
+    <section class="hero panel" data-parallax>
+      <picture class="photo hero-photo"><img src="public/images/hero-altiora.svg" alt="Photorealistic contemporary stone villa on an Italian alpine ridge above cloud inversion with a discreet personal eVTOL on a landing platform"></picture>
+      <div class="hero-copy reveal"><p class="eyebrow">ALTIORA ESTATES</p><h1>THE FUTURE<br>LIVES ABOVE</h1><p>Luxury real estate for the age of personal flight.</p><a class="btn primary" href="#era">Discover the Vision</a></div>
+      <span class="mouse" aria-hidden="true"></span>
     </section>
 
-    <section id="vision" class="section manifesto"><p class="eyebrow">Manifesto</p><h2>The future does not build new destinations. It unlocks forgotten ones.</h2><p class="lead">For more than a century, roads defined real estate value. Personal air mobility may change that logic. Places once considered too remote can become private refuges of exceptional value — provided architecture, energy, access and regulation are treated with equal seriousness.</p><div class="quote-grid"><article class="lux-card"><span>01</span><h3>Own the Unreachable.</h3></article><article class="lux-card"><span>02</span><h3>What was once unreachable becomes exclusive.</h3></article><article class="lux-card"><span>03</span><h3>Silence is the new status.</h3></article></div></section>
+    <section id="era" class="section era grid-two">
+      <div class="reveal"><p class="eyebrow">A New Era</p><h2>The automobile transformed cities.<br><em>Personal flight will transform geography.</em></h2></div>
+      <div class="copy reveal"><p>Roads have defined property values for centuries. Emerging personal electric aircraft may redefine accessibility. Remote mountain estates could become tomorrow's most desirable addresses: private, silent, elevated and no longer psychologically distant.</p></div>
+      <picture class="photo wide"><img src="public/images/estate-alpine.svg" alt="Photorealistic aerial panorama of untouched Italian mountains at sunrise"></picture>
+    </section>
 
-    <section class="section split warm"><div><p class="eyebrow">The Hidden Inventory</p><h2>A fragmented archive of stone, altitude and abandonment.</h2><p class="lead dark-lead">Italy contains a vast hidden property inventory: ruderi, casali, abandoned hamlets, shelters and rural stone structures in positions where new construction would be difficult or impossible to authorise today.</p><p class="fineprint">Working assumption only: references to abandoned rural and mountain structures require validation during project development.</p></div><figure class="image-frame"><img src="public/images/hidden-inventory.svg" alt="Hidden Italian property inventory collage"></figure></section>
+    <section id="italy" class="section italy">
+      <picture class="photo bg"><img src="public/images/before-ruin.svg" alt="Beautiful abandoned stone hamlet surrounded by forest at golden hour"></picture>
+      <div class="reveal italy-content"><p class="eyebrow">Italy's Hidden Treasure</p><h2>One of Europe's great mountain archives.</h2><p>Italy possesses one of Europe's largest concentrations of abandoned mountain heritage suitable for restoration, depending on local regulations: historic stone villages, alpine farmhouses, mountain refuges and ruins shaped by centuries of altitude.</p><div class="italy-map" aria-label="Stylized map silhouette of Italy with animated opportunity dots"><span></span><i></i><b></b><em></em></div><div class="stats"><strong>Hundreds of thousands</strong><span>abandoned rural buildings are often discussed in broad estimates; ALTIORA avoids unsupported precision.</span><strong>Many forms</strong><span>hamlets · farmhouses · refuges · ruins · stone villages</span></div></div>
+    </section>
 
-    <section id="estates" class="section"><p class="eyebrow">Before / After</p><h2>Conservation first. Intervention second.</h2><p class="lead">Original stone is preserved where technically feasible, then paired with contemporary openings, minimal interiors, solar and storage, water collection, smart home systems and a discreet landing area subject to approvals.</p><div class="before-after"><figure class="image-frame"><img src="public/images/before-ruin.svg" alt="Photographic-style abandoned stone ruin before restoration"><figcaption>Ruin state: abandoned shell</figcaption></figure><figure class="image-frame after"><img src="public/images/after-estate.svg" alt="Photographic-style restored stone luxury estate after intervention"><figcaption>Restored state: habitable estate</figcaption></figure></div></section>
+    <section id="method" class="section"><p class="eyebrow reveal">The ALTIORA Method</p><h2 class="reveal">Acquire silence. Restore memory. Elevate access.</h2><div class="method-grid">
+      <article class="method-card reveal"><span>⌖</span><h3>Discover</h3><p>Acquire forgotten mountain properties.</p></article>
+      <article class="method-card reveal"><span>◫</span><h3>Restore</h3><p>World-class architecture respecting history.</p></article>
+      <article class="method-card reveal"><span>△</span><h3>Elevate</h3><p>Integrate sustainable technologies and private landing infrastructure where legally feasible.</p></article>
+      <article class="method-card reveal"><span>◯</span><h3>Live</h3><p>Experience unprecedented privacy and freedom.</p></article>
+    </div></section>
 
-    <section class="section estate-system"><p class="eyebrow">The ALTIORA Estate</p><h2>A property, an infrastructure and a private operating system.</h2><p class="lead">Each estate is conceived as a complete luxury asset, not a listing: architecture, autonomy, privacy, systems, service and personal flight integration designed as one experience.</p><div class="feature-grid" id="features"></div></section>
+    <section class="experience panel"><picture class="photo full"><img src="public/images/after-estate.svg" alt="Luxury couple drinking coffee overlooking the Alps from a stone terrace with a sleek personal eVTOL resting nearby"></picture><h2 class="reveal">Silence became the new waterfront.</h2></section>
 
-    <section class="section split flight"><figure class="image-frame"><img src="public/images/landing-area.svg" alt="Private landing infrastructure concept"></figure><div><p class="eyebrow">Personal Flight</p><h2>Flight-access, without dependence on one aircraft.</h2><p class="lead">ALTIORA is designed around the broader evolution of personal eVTOL and ultralight aircraft, with every package subject to legal, technical and environmental verification.</p><p class="fineprint">Aircraft availability, pilot requirements, operating limitations and landing infrastructure depend on local law, weather, training and approvals.</p></div></section>
+    <section class="section lifestyle"><p class="eyebrow reveal">Lifestyle</p><h2 class="reveal">Not escape. Arrival.</h2><div class="life-row"><picture class="photo"><img src="public/images/estate-tuscan.svg" alt="Private dinner on a mountain terrace"></picture><p>Private dinner on a mountain terrace.</p></div><div class="life-row reverse"><picture class="photo"><img src="public/images/hidden-inventory.svg" alt="Morning yoga above clouds"></picture><p>Morning yoga above clouds.</p></div><div class="life-row"><picture class="photo"><img src="public/images/interior.svg" alt="Architect walking inside restored stone villa and luxury interior combining Italian stone and Scandinavian minimalism"></picture><p>Stone, glass, wool, firelight.</p></div><div class="life-row reverse"><picture class="photo"><img src="public/images/landing-area.svg" alt="Family arriving by personal eVTOL"></picture><p>Arrival without roads.</p></div></section>
 
-    <section class="section value"><p class="eyebrow">Flight Changes Value</p><h2>Roads defined real estate for a century. Flight will define what comes next.</h2><div class="route-card glass"><div><strong>Mountain road</strong><span>2 hours illustrative</span></div><svg viewBox="0 0 160 24" aria-hidden="true"><path d="M2 12h138M128 2l20 10-20 10"/></svg><div><strong>Personal flight</strong><span>18 minutes illustrative</span></div></div></section>
+    <section class="section timeline-section"><p class="eyebrow reveal">Why Now</p><h2 class="reveal">Every era redraws the map.</h2><ol class="timeline"><li>Industrial Revolution</li><li>Automobile</li><li>Commercial Aviation</li><li>Internet</li><li>Electric Mobility</li><li>Personal Flight</li><li>ALTIORA</li></ol></section>
 
-    <section class="section split warm"><div><p class="eyebrow">Why Italy</p><h2>Landscape density, cultural gravity and rare private locations.</h2><p class="lead dark-lead">Alps, Apennines, Ligurian ridges, rural Tuscany and inland territories create extraordinary diversity near coastlines, cities and heritage.</p></div><figure class="image-frame"><img src="public/images/italy-collage.svg" alt="Italian landscape collage"></figure></section>
+    <section id="club" class="section club grid-two"><picture class="photo"><img src="public/images/interior.svg" alt="Elegant lounge with fireplace inside mountain lodge"></picture><div class="reveal"><p class="eyebrow">Owners Club</p><h2>A private operating system for life above.</h2><p>Property management, concierge, maintenance, flight support, lifestyle experiences, security, architectural assistance and seasonal preparation — orchestrated with the discretion of a private resort.</p></div></section>
 
-    <section id="model" class="section"><p class="eyebrow">Business Model</p><h2>From overlooked asset to flight-access luxury estate.</h2><p class="lead">A disciplined sequence turns scarcity into a complete branded ownership experience.</p><div class="model-rows" id="modelRows"></div></section>
+    <section id="disclaimer" class="section disclaimer"><p class="eyebrow reveal">Disclaimer</p><h2 class="reveal">Vision, governed by reality.</h2><p class="reveal">Personal electric aircraft remain an emerging sector. Availability depends on local aviation regulations and future certification. ALTIORA ESTATES is presented as a visionary concept exploring how future mobility could influence luxury real estate. No unsupported commercial claim, aircraft availability, certification, route time, landing right or property feasibility is implied.</p></section>
 
-    <section id="club" class="section club"><p class="eyebrow">Owners Club</p><h2>More than ownership. A private ecosystem.</h2><p class="lead">Aircraft support coordination, estate maintenance, concierge, transfers, chef and hospitality, security, housekeeping, seasonal preparation, experience planning, shared arrival hubs and rental management where applicable.</p></section>
-
-    <section class="section"><p class="eyebrow">Featured Concept Estates</p><h2>Three concepts. No addresses. No implied availability.</h2><p class="lead">The following estates are architectural and investment concepts, not properties currently offered for sale.</p><div class="concept-grid" id="concepts"></div></section>
-
-    <section class="section thesis warm"><p class="eyebrow">Investment Thesis</p><h2>Scarcity-led repositioning, not volume development.</h2><p class="lead dark-lead">The thesis combines overlooked inventory, high-value repositioning, scarcity-driven luxury, emerging mobility, recurring service revenue, strong brand potential and first-mover positioning — without treating feasibility as automatic.</p></section>
-
-    <section class="section"><p class="eyebrow">Responsibility and Feasibility</p><h2>Vision earns value only when it survives verification.</h2><p class="lead">Every development requires urban planning due diligence, title checks, legal access, landscape constraints, environmental compatibility, authorisations, flight safety, meteorology, emergency infrastructure, acoustic impact and technical sustainability.</p></section>
-
-    <section id="contact" class="section contact"><div><p class="eyebrow">Private Access</p><h2>Request a confidential introduction.</h2><p class="lead">For estate acquisition, investment, partnerships, architecture and personal flight integration.</p></div><form id="form" class="form-card glass" novalidate></form></section>
+    <section id="join" class="final-cta panel"><picture class="photo full"><img src="public/images/hero-altiora.svg" alt="Night villa illuminated under stars with aircraft softly lit"></picture><div class="reveal"><p class="eyebrow">Private Access</p><h2>Own what roads can never reach.</h2><a class="btn primary" href="mailto:vision@altiora-estates.example">Join the Vision</a></div></section>
   </main>
 
-  <footer class="section footer"><div><img src="public/brand/logo-light.svg" alt="ALTIORA ESTATES" width="220"><p>Luxury Beyond Roads.</p></div><nav><a href="#vision">Vision</a><a href="#estates">Estates</a><a href="#club">Owners Club</a><a href="#contact">Partnerships</a><a href="privacy.html">Privacy</a><a href="legal.html">Legal</a></nav><p class="fineprint">ALTIORA ESTATES is a conceptual real estate and mobility venture. Images and properties shown may be architectural visualisations. Aircraft availability and operations are subject to applicable regulations, certification, training, weather, local authorisations and technical feasibility.</p></footer>
+  <footer class="footer"><div><img src="public/brand/logo-light.svg" alt="ALTIORA ESTATES" width="220"><p>The Future Lives Above.</p></div><form><label>Newsletter<input type="email" placeholder="Email address"></label><button class="btn" type="button">Subscribe</button></form><nav><a href="#">Instagram</a><a href="#">LinkedIn</a><a href="mailto:vision@altiora-estates.example">Email</a></nav></footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
   <script>
-    const $ = (id) => document.getElementById(id);
-    const features = ['Architectural restoration','Off-grid energy systems','Solar and storage','Water autonomy','Smart security','Climate control','Satellite connectivity','Legal landing feasibility','Interior design','Estate management','Aircraft integration','Private concierge'];
-    features.forEach((f, i) => $('features').insertAdjacentHTML('beforeend', `<article class="feature"><span>✦</span><h3>${f}</h3><small>${String(i + 1).padStart(2, '0')}</small></article>`));
-    const rows = [['Scout','Identification of exceptional underused or abandoned properties.'],['Secure','Acquisition, legal due diligence, access analysis and planning feasibility.'],['Restore','Architectural redevelopment with premium design and environmental integration.'],['Integrate','Energy, connectivity, landing infrastructure and mobility services.'],['Deliver','Sale of the completed estate, with optional aircraft and service package.'],['Manage','Ongoing maintenance, concierge, security and owners club services.']];
-    rows.forEach((r, i) => $('modelRows').insertAdjacentHTML('beforeend', `<article><span>0${i + 1}</span><h3>${r[0]}</h3><p>${r[1]}</p></article>`));
-    const concepts = [['Ligurian Ridge Estate','public/images/estate-ligurian.svg','A restored stone volume suspended between maritime Alps and the Mediterranean horizon.'],['Alpine Silence Residence','public/images/estate-alpine.svg','A former highland shelter reimagined as an energy-positive retreat for absolute winter quiet.'],['Tuscan High Ground Retreat','public/images/estate-tuscan.svg','A rural stone compound on elevated terrain, discreetly upgraded for privacy, light and autonomy.']];
-    concepts.forEach(c => $('concepts').insertAdjacentHTML('beforeend', `<article class="concept image-frame"><img src="${c[1]}" alt="${c[0]}"><div><p class="eyebrow">Concept</p><h3>${c[0]}</h3><p>${c[2]}</p><small>Approx. 360–620 sqm · status: concept thesis</small></div></article>`));
-    $('form').innerHTML = ['Full name','Email','Country'].map((l,i)=>`<label>${l}<input name="${['name','email','country'][i]}" type="${i===1?'email':'text'}" required></label>`).join('') + `<label>I am interested in<select name="interest" required><option value="">Select one</option><option>Estate acquisition</option><option>Investment</option><option>Partnership</option><option>Architecture and development</option><option>Personal flight integration</option></select></label><label>Message<textarea name="message" rows="5"></textarea></label><label class="consent"><input name="consent" type="checkbox" required><span>I consent to be contacted and acknowledge the privacy notice.</span></label><p id="msg" role="alert"></p><button class="btn primary">Request Private Access</button>`;
-    $('form').addEventListener('submit', (e) => { e.preventDefault(); const d = new FormData(e.currentTarget); if (!d.get('name') || !String(d.get('email')).includes('@') || !d.get('country') || !d.get('interest') || !d.get('consent')) { $('msg').textContent = 'Please complete all required fields and consent before requesting access.'; return; } $('msg').textContent = 'Your request has been recorded locally for this static preview.'; e.currentTarget.reset(); });
-    addEventListener('scroll', () => $('hdr').classList.toggle('scrolled', scrollY > 24), { passive: true });
-    $('menuBtn').onclick = () => { $('menu').hidden = false; $('menuBtn').setAttribute('aria-expanded','true'); };
-    $('close').onclick = () => { $('menu').hidden = true; $('menuBtn').setAttribute('aria-expanded','false'); };
-    document.querySelectorAll('#menu a').forEach(a => a.onclick = $('close').onclick);
+    const $ = id => document.getElementById(id); addEventListener('scroll',()=> $('hdr').classList.toggle('scrolled', scrollY>24),{passive:true});
+    $('menuBtn').onclick=()=>{ $('menu').hidden=false; $('menuBtn').setAttribute('aria-expanded','true')}; $('close').onclick=()=>{ $('menu').hidden=true; $('menuBtn').setAttribute('aria-expanded','false')}; document.querySelectorAll('#menu a').forEach(a=>a.onclick=$('close').onclick);
+    if (window.gsap) { gsap.registerPlugin(ScrollTrigger); gsap.utils.toArray('.reveal').forEach(el=>gsap.fromTo(el,{autoAlpha:0,y:42},{autoAlpha:1,y:0,duration:1.25,ease:'power3.out',scrollTrigger:{trigger:el,start:'top 82%'}})); gsap.utils.toArray('.photo img').forEach(img=>gsap.to(img,{scale:1.08,ease:'none',scrollTrigger:{trigger:img,start:'top bottom',end:'bottom top',scrub:true}})); gsap.utils.toArray('.timeline li').forEach((li,i)=>gsap.fromTo(li,{opacity:.2},{opacity:1,duration:.4,scrollTrigger:{trigger:li,start:'top 78%',toggleActions:'play none none reverse'}})); }
+    const c=$('mist'),x=c.getContext('2d'); let w,h,p=[]; function size(){w=c.width=innerWidth;h=c.height=innerHeight;p=Array.from({length:70},()=>({x:Math.random()*w,y:Math.random()*h,r:Math.random()*1.6+.2,v:Math.random()*.18+.03}))} size(); addEventListener('resize',size); (function draw(){x.clearRect(0,0,w,h);x.fillStyle='rgba(245,245,245,.16)';p.forEach(o=>{o.x+=o.v;if(o.x>w)o.x=0;x.beginPath();x.arc(o.x,o.y,o.r,0,7);x.fill()});requestAnimationFrame(draw)})();
   </script>
 </body>
 </html>
